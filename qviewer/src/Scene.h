@@ -10,6 +10,7 @@
 #include "XForm.h"
 
 class GLViewer;
+class DialsAndKnobs;
 class TriMesh;
 class dkFloat;
 class dkEnum;
@@ -23,7 +24,8 @@ public:
 
 	bool load( const QString& filename );
     bool load( const QDomElement& root, const QDir& path );
-    bool save( const QString& filename, const GLViewer* viewer );
+    bool save( const QString& filename, const GLViewer* viewer,
+               const DialsAndKnobs* dials_and_knobs );
     bool save( QDomDocument& doc, QDomElement& root, const QDir& path );
 
     void recordStats(GQStats& stats);
@@ -36,6 +38,7 @@ public:
 
     const TriMesh* trimesh() const { return _trimesh; }
     const QDomElement& viewerState() { return _viewer_state; }
+    const QDomElement& dialsAndKnobsState() { return _dials_and_knobs_state; }
 
 protected:
     void setupMesh();
@@ -52,6 +55,7 @@ protected:
     vec                 _light_direction;
 
     QDomElement         _viewer_state;
+    QDomElement         _dials_and_knobs_state;
 };
 
 #endif // SCENE_H_

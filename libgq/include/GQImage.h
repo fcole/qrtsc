@@ -13,8 +13,6 @@
 #ifndef _GQ_IMAGE_H_
 #define _GQ_IMAGE_H_
 
-#include <stdlib.h> // for NULL
-
 #include <QString>
 
 class GQImage
