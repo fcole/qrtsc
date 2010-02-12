@@ -32,7 +32,7 @@ const int CURRENT_INTERFACE_VERSION = 1;
 
 const int MAX_RECENT_SCENES = 4;
 
-static dkBool camera_perspective("Perspective", true, DK_MENU, "Camera");
+static dkBool camera_perspective("Camera->Perspective", true, DK_MENU);
 
 MainWindow::MainWindow( )
 {
@@ -54,7 +54,8 @@ void MainWindow::init( const QDir& working_dir, const QString& scene_name )
     QGLFormat format;
     format.setAlpha(true);
     // enabling multisampling caused weird buffer corruption bugs 
-    // (back buffer sometimes is visible, back buffer sometimes is not cleared properly)
+    // (back buffer sometimes is visible, back buffer sometimes is not 
+    // cleared properly)
     //format.setSampleBuffers(true);
     format.setDoubleBuffer(true);
     QGLFormat::setDefaultFormat(format);
@@ -76,7 +77,8 @@ void MainWindow::init( const QDir& working_dir, const QString& scene_name )
     settings.beginGroup("recent_scenes");
     for (int i = 0; i < MAX_RECENT_SCENES; i++)
     {
-        QString scene_name = settings.value(QString("scene_%1").arg(i)).toString();
+        QString scene_name = 
+            settings.value(QString("scene_%1").arg(i)).toString();
 
         if (!scene_name.isEmpty())
         {
@@ -129,14 +131,17 @@ void MainWindow::closeEvent( QCloseEvent* event )
 
 bool MainWindow::openScene( const QString& filename )
 {
-    // Try to do all the file loading before we change the mainwindow state at all.
+    // Try to do all the file loading before we change 
+    // the mainwindow state at all.
 
-    QString absfilename = QDir::fromNativeSeparators(_working_dir.absoluteFilePath(filename));
+    QString absfilename = 
+        QDir::fromNativeSeparators(_working_dir.absoluteFilePath(filename));
     QFileInfo fileinfo(absfilename);
     
     if (!fileinfo.exists())
     {
-        QMessageBox::critical(this, "File Not Found", QString("\"%1\" does not exist.").arg(absfilename));
+        QMessageBox::critical(this, "File Not Found", 
+            QString("\"%1\" does not exist.").arg(absfilename));
         return false;
     }
 
@@ -144,7 +149,8 @@ bool MainWindow::openScene( const QString& filename )
     
     if (!new_scene->load(absfilename))
     {
-        QMessageBox::critical(this, "Open Failed", QString("Failed to load \"%1\". Check console.").arg(absfilename));
+        QMessageBox::critical(this, "Open Failed", 
+            QString("Failed to load \"%1\". Check console.").arg(absfilename));
         delete new_scene;
         return false;
     }
@@ -161,6 +167,7 @@ bool MainWindow::openScene( const QString& filename )
     _scene->recordStats(GQStats::instance());
 
     _gl_viewer->setScene(_scene);
+    _dials_and_knobs->load(_scene->dialsAndKnobsState());
 
     addCurrentSceneToRecentList();
 
@@ -169,13 +176,10 @@ bool MainWindow::openScene( const QString& filename )
     return true;
 }
 
-/*bool MainWindow::saveScene( const QString& filename )
+bool MainWindow::saveScene( const QString& filename )
 {
-    _dpix_scene->nprSettings()->copyPersistent(NPRSettings::instance());
-    _dpix_scene->setSession(_current_session);
-    return _dpix_scene->save(filename, _glViewer);
+    return _scene->save(filename, _gl_viewer, _dials_and_knobs);
 }
-*/
 
 void MainWindow::on_actionOpen_Recent_Scene_triggered(int which)
 {
@@ -217,7 +221,8 @@ void MainWindow::updateRecentScenesMenu()
             else
             {
                 QAction* new_action = new QAction(_recent_scenes[i], this);
-                connect(new_action, SIGNAL(triggered(bool)), &_recent_scenes_mapper, SLOT(map()));
+                connect(new_action, SIGNAL(triggered(bool)), 
+                        &_recent_scenes_mapper, SLOT(map()));
                 _recent_scenes_mapper.setMapping(new_action, i);
                 new_action->setShortcut(Qt::CTRL + Qt::Key_1 + i);
                 _recent_scenes_actions.append(new_action);
@@ -225,13 +230,17 @@ void MainWindow::updateRecentScenesMenu()
             }
         }
     }
-    connect(&_recent_scenes_mapper, SIGNAL(mapped(int)), this, SLOT(on_actionOpen_Recent_Scene_triggered(int)));
+    connect(&_recent_scenes_mapper, SIGNAL(mapped(int)), 
+            this, SLOT(on_actionOpen_Recent_Scene_triggered(int)));
 }
 
 void MainWindow::setupUi()
 {
     setupFileMenu();
-    setupDockWidgets();
+    QMenu* windowMenu = menuBar()->addMenu(tr("&Window"));
+    setupViewerResizeActions(windowMenu);
+    windowMenu->addSeparator();
+    setupDockWidgets(windowMenu);
 
     connect(&camera_perspective, SIGNAL(valueChanged(bool)),
         this, SLOT(on_actionCamera_Perspective_toggled(bool)));
@@ -250,6 +259,11 @@ void MainWindow::setupFileMenu()
     _recent_scenes_menu = fileMenu->addMenu(tr("&Recent Scenes"));
 
     fileMenu->addSeparator();
+
+    QAction* saveSceneAction = new QAction(tr("&Save Scene..."), 0);
+    connect(saveSceneAction, SIGNAL(triggered()), 
+        this, SLOT(on_actionSave_Scene_triggered()));
+    fileMenu->addAction(saveSceneAction);
 
     QAction* save_screenshot = new QAction(tr("Save S&creenshot..."), 0);
     save_screenshot->setShortcut(QKeySequence(tr("Ctrl+S")));
@@ -274,20 +288,18 @@ void MainWindow::setupFileMenu()
     fileMenu->addAction(quit_action);
 }
 
-void MainWindow::setupDockWidgets()
+void MainWindow::setupDockWidgets(QMenu* menu)
 {
-    QMenu* windowMenu = menuBar()->addMenu(tr("&Window"));
-
     _dials_and_knobs = new DialsAndKnobs(this);
     connect(_dials_and_knobs, SIGNAL(dataChanged()),
         _gl_viewer, SLOT(updateGL()));
 
-    windowMenu->addAction(_dials_and_knobs->toggleViewAction());
+    menu->addAction(_dials_and_knobs->toggleViewAction());
 
     _console = new Console(this);
     _console->installMsgHandler();
 
-    windowMenu->addAction(_console->toggleViewAction());
+    menu->addAction(_console->toggleViewAction());
 
     _stats_widget = new QDockWidget(tr("Statistics"), this);
     QTreeView* tree_view = new QTreeView;
@@ -296,7 +308,7 @@ void MainWindow::setupDockWidgets()
     addDockWidget(Qt::RightDockWidgetArea, _stats_widget);
     _stats_widget->setObjectName("stats");
 
-    windowMenu->addAction(_stats_widget->toggleViewAction());
+    menu->addAction(_stats_widget->toggleViewAction());
 }
 
 void MainWindow::makeWindowTitle()
@@ -316,11 +328,24 @@ void MainWindow::on_actionOpen_Scene_triggered()
 {
     QString filename = 
         myFileDialog(QFileDialog::AcceptOpen, "Open Scene", 
-        "Scenes (*.qvs *.off *.obj *.ply)", _last_scene_dir );
+        "Scenes (*." + Scene::fileExtension() + " *.off *.obj *.ply)", 
+        _last_scene_dir );
 
     if (!filename.isNull())
     {
         openScene( filename );
+    }
+}
+
+void MainWindow::on_actionSave_Scene_triggered()
+{
+    QString filename = 
+        myFileDialog(QFileDialog::AcceptSave, "Save Scene", 
+        "Scenes (*." + Scene::fileExtension() + ")", _last_scene_dir );
+
+    if (!filename.isNull())
+    {
+        saveScene( filename );
     }
 }
 
@@ -367,6 +392,11 @@ void MainWindow::resizeToFitViewerSize( int x, int y )
     resize( newsize );
 }
 
+void MainWindow::resizeToFitViewerSize(const QString& size)
+{
+    QStringList dims = size.split("x");
+    resizeToFitViewerSize(dims[0].toInt(), dims[1].toInt());
+}
 
 void MainWindow::on_actionReload_Shaders_triggered()
 {
@@ -374,8 +404,30 @@ void MainWindow::on_actionReload_Shaders_triggered()
     _gl_viewer->updateGL();
 }
 
-QString MainWindow::myFileDialog( int mode, const QString& caption, const QString& filter, 
-                                  QString& last_dir)
+void MainWindow::setupViewerResizeActions(QMenu* menu)
+{
+    QStringList sizes = QStringList() << "512x512" <<
+        "640x480" << "800x600" << "1024x768" << "1024x1024";
+
+    QMenu* resize_menu = menu->addMenu("&Resize Viewer");
+
+    for (int i = 0; i < sizes.size(); i++)
+    {
+        QAction* size_action = new QAction(sizes[i], 0);
+        _viewer_size_mapper.setMapping(size_action, sizes[i]);
+        connect(size_action, SIGNAL(triggered()), 
+                &_viewer_size_mapper, SLOT(map()));
+        resize_menu->addAction(size_action);
+    }
+
+    connect(&_viewer_size_mapper, SIGNAL(mapped(const QString&)),
+            this, SLOT(resizeToFitViewerSize(const QString&)));
+
+    menu->addMenu(resize_menu);
+}
+
+QString MainWindow::myFileDialog( int mode, const QString& caption, 
+        const QString& filter, QString& last_dir)
 {
     QFileDialog dialog(this, caption, last_dir, filter);
     dialog.setAcceptMode((QFileDialog::AcceptMode)mode);
@@ -395,7 +447,8 @@ QString MainWindow::myFileDialog( int mode, const QString& caption, const QStrin
                 while (last_pos > 0)
                 {
                     int ext_end = filter.indexOf(QRegExp("[ ;)]"), last_pos);
-                    acceptable_extensions << filter.mid(last_pos+1, ext_end-last_pos-1);
+                    acceptable_extensions << filter.mid(last_pos+1, 
+                            ext_end-last_pos-1);
                     last_pos = filter.indexOf("*.", last_pos+1);
                 }
                 if (acceptable_extensions.size() > 0)

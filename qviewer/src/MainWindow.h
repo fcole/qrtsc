@@ -35,27 +35,32 @@ class MainWindow : public QMainWindow
 
   public slots:
     void on_actionOpen_Scene_triggered();
+    void on_actionSave_Scene_triggered();
     void on_actionReload_Shaders_triggered();
     void on_actionOpen_Recent_Scene_triggered(int which);
     void on_actionSave_Screenshot_triggered();
     void on_actionCamera_Perspective_toggled(bool checked);
+    void resizeToFitViewerSize(const QString& size);
 
   protected:
     void closeEvent(QCloseEvent* event );
 
     bool openScene( const QString& filename );
+    bool saveScene( const QString& filename );
 
     void resizeToFitViewerSize( int x, int y );
     void setFoV(float degrees);
 
     void setupUi();
     void setupFileMenu();
-    void setupDockWidgets();
+    void setupDockWidgets(QMenu* menu);
     void makeWindowTitle();
     void hideAllDockWidgets();
 
     void addCurrentSceneToRecentList();
     void updateRecentScenesMenu();
+
+    void setupViewerResizeActions(QMenu* menu);
 
     QString myFileDialog( int mode, const QString& caption, const QString& filter, QString& last_dir );
 
@@ -65,7 +70,7 @@ class MainWindow : public QMainWindow
     Console*    _console;
     DialsAndKnobs* _dials_and_knobs;
     QDockWidget* _stats_widget;
-
+    QSignalMapper _viewer_size_mapper;
 
     QString     _scene_name;
 

@@ -32,12 +32,13 @@ void Scene::clear()
     _trimesh = NULL;
     _vertex_buffer_set.clear();
     _viewer_state.clear();
+    _dials_and_knobs_state.clear();
 }
 
 
 bool Scene::load( const QString& filename )
 {
-    if (filename.endsWith("qvs"))
+    if (filename.endsWith(fileExtension()))
     {
         QFile file(filename);
         if (!file.open(QIODevice::ReadOnly))
@@ -71,7 +72,7 @@ bool Scene::load( const QString& filename )
             return false;
         }
         _viewer_state.clear();
-
+        _dials_and_knobs_state.clear();
         setupMesh();
 
         return true;
@@ -115,18 +116,27 @@ bool Scene::load( const QDomElement& root, const QDir& path )
         return false;
     }
 
-    setupMesh();
+    _dials_and_knobs_state = root.firstChildElement("dials_and_knobs");
+    if (_dials_and_knobs_state.isNull())
+    {
+        qWarning("Scene::load: no dials_and_knobs node found.\n");
+        return false;
+    }
+	setupMesh();
 
     return true;
 }
 
-bool Scene::save( const QString& filename, const GLViewer* viewer )
+bool Scene::save(const QString& filename, const GLViewer* viewer,
+                 const DialsAndKnobs* dials_and_knobs)
 {
     QDomDocument doc("scene");
     QDomElement root = doc.createElement("scene");
     doc.appendChild(root);
 
     _viewer_state = viewer->domElement("viewerstate", doc);
+    _dials_and_knobs_state = 
+        dials_and_knobs->domElement("dials_and_knobs", doc);
 
     QDir path = QFileInfo(filename).absoluteDir();
 
@@ -157,6 +167,7 @@ bool Scene::save( QDomDocument& doc, QDomElement& root, const QDir& path )
     root.appendChild(model);
 
     root.appendChild(_viewer_state);
+    root.appendChild(_dials_and_knobs_state);
 
     return true;
 }
