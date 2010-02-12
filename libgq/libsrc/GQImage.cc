@@ -396,7 +396,8 @@ bool GQFloatImage::loadPFM(const QString& filename)
 		return false;
 	}
 
-	int headerLength = qsType.length() + qsWidth.length() + qsHeight.length() + qsScale.length() + 4;	
+	int headerLength = qsType.length() + qsWidth.length() + 
+                       qsHeight.length() + qsScale.length() + 4;	
 
 	QDataStream inputDataStream( &inputFile );
 	inputDataStream.skipRawData( headerLength );
@@ -410,7 +411,9 @@ bool GQFloatImage::loadPFM(const QString& filename)
 		{
 			int yy = height - y - 1;
 
-			inputDataStream.readRawData( reinterpret_cast< char* >( &( buffer[ 0 ] ) ), channels * sizeof( float ) );
+			inputDataStream.readRawData( 
+                    reinterpret_cast< char* >( &( buffer[ 0 ] ) ), 
+                    channels * sizeof( float ) );
 			for (int c = 0; c < channels; c++)
 				setPixelChannel(x, yy, c, buffer[c]);
 		}

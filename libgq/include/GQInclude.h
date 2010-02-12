@@ -30,6 +30,11 @@ See the COPYING file for details.
 #    include <GL/glu.h>
 #endif
 
+//#define GQ_DEBUGGING_LEVEL_REALLY_VERBOSE
+//#define GQ_DEBUGGING_LEVEL_VERBOSE
+#define GQ_DEBUGGING_LEVEL_QUIET
+//#define GQ_DEBUGGING_LEVEL_SILENT
+
 #include <Vec.h>
 #include <XForm.h>
 #include <QtGlobal>

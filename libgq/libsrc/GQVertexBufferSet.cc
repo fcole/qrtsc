@@ -13,10 +13,9 @@ See the COPYING file for details.
 #include "GQVertexBufferSet.h"
 #include <assert.h>
 
-bool          GQVertexBufferSet::_gl_buffer_object_bound = false;
-int           GQVertexBufferSet::_last_used_guid = 1;
-int           GQVertexBufferSet::_bound_guid = 0;
-QList<int>    GQVertexBufferSet::_bound_attribs;
+int                 GQVertexBufferSet::_last_used_guid = 1;
+QHash<int,int>      GQVertexBufferSet::_bound_guids;
+QHash<QString,int>  GQVertexBufferSet::_bound_buffers;
 
 GLenum kGlArrays[GQ_NUM_VERTEX_BUFFER_TYPES] = { GL_VERTEX_ARRAY, 
                                        GL_NORMAL_ARRAY, 
@@ -36,8 +35,6 @@ void handleGLError()
 
 void GQVertexBufferSet::clear()
 {
-    assert(_bound_guid == 0);
-
     if (_buffers.size() > 0)
         deleteVBOs();
 
@@ -73,6 +70,14 @@ void GQVertexBufferSet::add( GQVertexBufferType semantic, int width,
 {
     QString name = GQVertexBufferNames[semantic];
     add(name, width, format, length);
+    _buffer_hash[name]->_semantic = semantic;
+}
+
+void GQVertexBufferSet::add( GQVertexBufferType semantic, 
+                            const QVector<vec>& data )
+{
+    QString name = GQVertexBufferNames[semantic];
+    add(name, data);
     _buffer_hash[name]->_semantic = semantic;
 }
 
@@ -113,6 +118,17 @@ void GQVertexBufferSet::add( const QString& name, int width,
 }
 
 void GQVertexBufferSet::add(const QString& name,
+                            const QVector<vec>& data )
+{
+    BufferInfo newinfo;
+    int width = 3;
+    int length = data.size();
+    newinfo.init(name, _gl_usage_mode, GL_FLOAT, width, length, 
+        reinterpret_cast<const uint8*>(data.constData()));
+    add(newinfo);
+}
+
+void GQVertexBufferSet::add(const QString& name,
                             const std::vector<vec>& data )
 {
     BufferInfo newinfo;
@@ -125,13 +141,41 @@ void GQVertexBufferSet::add(const QString& name,
 
 void GQVertexBufferSet::add( const BufferInfo& buffer_info )
 {
+    // If a buffer with this name already exists, add
+    // replaces it.
+    if (_buffer_hash.contains(buffer_info._name))
+    {
+        for (int i = 0; i < _buffers.size(); i++)
+        {
+            if (&_buffers[i] == _buffer_hash[buffer_info._name])
+            {
+                _buffers.removeAt(i);
+                break;
+            }
+        }
+    }
     _buffers.push_back(buffer_info);
     _buffer_hash[buffer_info._name] = &(_buffers.last());
+}
+
+void GQVertexBufferSet::remove( const BufferInfo& buffer_info )
+{
+    if (_buffer_hash.contains(buffer_info._name))
+    {
+        for (int i = 0; i < _buffers.size(); i++)
+        {
+            if (&_buffers[i] == _buffer_hash[buffer_info._name])
+            {
+                _buffers.removeAt(i);
+                break;
+            }
+        }
+    }
 }
         
 void GQVertexBufferSet::setUsageMode(GQVertexBufferUsage usage_mode)
 {
-    assert(_bound_guid != _guid);
+    assert(!_bound_guids.contains(_guid));
 
     switch (usage_mode)
     {
@@ -192,11 +236,7 @@ void GQVertexBufferSet::deleteVBOs()
 {
     for (int i = 0; i < _buffers.size(); i++)
     {
-        if (_buffers[i]._vbo_id >= 0)
-        {
-            glDeleteBuffers(1, (GLuint*)(&(_buffers[i]._vbo_id)));
-        }
-        _buffers[i]._vbo_id = -1;
+        _buffers[i].deleteVBO();
     }
     handleGLError();
 }
@@ -211,7 +251,7 @@ bool GQVertexBufferSet::vbosLoaded() const
 
 void GQVertexBufferSet::bind() const
 {
-    assert(_bound_guid == 0);
+    assert(!_bound_guids.contains(_guid));
 
     for (int i = 0; i < _buffers.size(); i++)
     {
@@ -220,13 +260,13 @@ void GQVertexBufferSet::bind() const
             bindBuffer(_buffers[i], -1);
         }
     }
-    _bound_guid = _guid;
+    _bound_guids[_guid] = 1;
     reportGLError();
 }
 
 void GQVertexBufferSet::bind( const GQShaderRef& current_shader ) const
 {
-    assert(_bound_guid == 0);
+    assert(!_bound_guids.contains(_guid));
 
     for (int i = 0; i < _buffers.size(); i++)
     {
@@ -240,47 +280,37 @@ void GQVertexBufferSet::bind( const GQShaderRef& current_shader ) const
             if (attrib_loc >= 0)
             {
                 bindBuffer(_buffers[i], attrib_loc);
-                _bound_attribs.push_back(attrib_loc);
+                //_bound_attribs.push_back(attrib_loc);
             }
+#ifdef GQ_DEBUGGING_LEVEL_VERBOSE
             else
             {
                 qCritical("GQVertexBufferSet::bind: Could not find matching attribute for %s.\n", qPrintable(_buffers[i]._name));
             }
+#endif
         }
         reportGLError();
     }
-    _bound_guid = _guid;
+    _bound_guids[_guid] = 1;
     reportGLError();
 }
 
 
 void GQVertexBufferSet::unbind() const
 {
-    assert(_bound_guid == _guid);
-
-    if (_gl_buffer_object_bound)
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        _gl_buffer_object_bound = false;
-    }
+    assert(_bound_guids.contains(_guid));
 
     for (int i = 0; i < _buffers.size(); i++)
     {
-        if (_buffers[i]._semantic < GQ_NUM_VERTEX_BUFFER_TYPES)
+        if (_bound_buffers.contains(_buffers[i]._name))
         {
-            glDisableClientState(kGlArrays[_buffers[i]._semantic]);
+            unbindBuffer(_buffers[i]);
         }
     }
-    for (int i = 0; i < _bound_attribs.size(); i++)
-    {
-        glDisableVertexAttribArray(_bound_attribs[i]);
-    }
-
-    _bound_attribs.clear();
 
     reportGLError();
 
-    _bound_guid = 0;
+    _bound_guids.remove(_guid);
 }
 
 
@@ -290,16 +320,10 @@ void GQVertexBufferSet::bindBuffer( const BufferInfo& info, int attrib ) const
     if (info._vbo_id >= 0)
     {
         glBindBuffer(GL_ARRAY_BUFFER, info._vbo_id);
-        _gl_buffer_object_bound = true;
     }
     else
     {
         datap = info.dataPointer();
-        if (_gl_buffer_object_bound)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            _gl_buffer_object_bound = false;
-        }
     }
 
     int stride = info._type_size * info._width * _element_stride;
@@ -335,6 +359,23 @@ void GQVertexBufferSet::bindBuffer( const BufferInfo& info, int attrib ) const
                                   (const void*)(datap + offset));
             break;
     }
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    _bound_buffers[info._name] = attrib;
+}
+
+void GQVertexBufferSet::unbindBuffer( const BufferInfo& info ) const
+{
+    int attrib = _bound_buffers[info._name];
+    if (attrib < 0)
+    {
+        glDisableClientState(kGlArrays[info._semantic]);
+    }
+    else
+    {
+        glDisableVertexAttribArray(attrib);
+    }
+    _bound_buffers.remove(info._name);
 }
 
 void GQVertexBufferSet::copyFromFBO(const GQFramebufferObject& fbo, 
@@ -435,4 +476,13 @@ int GQVertexBufferSet::BufferInfo::dataSize() const
         return _type_size * _width * _length;
     else 
         return 0;
+}
+
+void GQVertexBufferSet::BufferInfo::deleteVBO()
+{
+    if (_vbo_id >= 0)
+    {
+        glDeleteBuffers(1, (GLuint*)(&_vbo_id));
+    }
+    _vbo_id = -1;
 }

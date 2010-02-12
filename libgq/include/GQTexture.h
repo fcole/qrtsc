@@ -22,6 +22,7 @@ See the COPYING file for details.
 class GQTexture
 {
     public:
+        GQTexture();
         virtual ~GQTexture();
 
         virtual bool load( const QString& filename ) = 0;
@@ -47,12 +48,12 @@ class GQTexture
 class GQTexture2D : public GQTexture
 {
     public:
-        GQTexture2D();
-
         bool load( const QString& filename );
         bool create( const GQImage& image, int target = GL_TEXTURE_2D );
         bool create( const GQFloatImage& image, int target = GL_TEXTURE_2D );
-        bool create(int width, int height, int internalFormat, int format, int type, const void *data, int target = GL_TEXTURE_2D);
+        bool create(int width, int height, int internal_format, 
+                    int format, int type, const void *data, 
+                    int target = GL_TEXTURE_2D);
         bool bind() const;
         void unbind() const;
         void enable() const; 
@@ -65,12 +66,40 @@ class GQTexture2D : public GQTexture
         int target() const;
 
     protected:
-        bool genTexture(int width, int height, int internalFormat, int format, int type, const void *data);
+        bool genTexture(int width, int height, int internal_format, 
+                        int format, int type, const void *data);
     
     protected:
         int _target;
         int _width;
         int _height;
+};
+
+class GQTexture3D : public GQTexture
+{
+    public:
+        bool load( const QString& filename );
+        bool create(int width, int height, int depth, int internal_format, 
+                    int format, int type, bool use_mipmaps, const void *data);
+        bool bind() const;
+        void unbind() const;
+        void enable() const; 
+        void disable() const;
+        
+        unsigned int width() const { return _width; }
+        unsigned int height() const { return _height; }
+        unsigned int depth() const { return _depth; }
+
+        int target() const { return GL_TEXTURE_3D; }
+
+    protected:
+        bool genTexture(int internal_format, int format, int type, 
+                        bool use_mipmaps, const void *data);
+    
+    protected:
+        int _width;
+        int _height;
+        int _depth;
 };
 
 

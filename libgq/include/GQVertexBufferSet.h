@@ -57,10 +57,12 @@ class GQVertexBufferSet
         void add( GQVertexBufferType semantic, int width, const QVector<float>& data );
         void add( GQVertexBufferType semantic, int width, const QVector<uint8>& data );
         void add( GQVertexBufferType semantic, int width, int format, int length );
+        void add( GQVertexBufferType semantic, const QVector<vec>& data );
         void add( GQVertexBufferType semantic, const std::vector<vec>& data );
         void add( const QString& name, int width, const QVector<float>& data );
         void add( const QString& name, int width, const QVector<uint8>& data );
         void add( const QString& name, int width, int format, int length );
+        void add( const QString& name, const QVector<vec>& data );
         void add( const QString& name, const std::vector<vec>& data );
 
         int  numBuffers() const { return _buffers.size(); }
@@ -72,7 +74,7 @@ class GQVertexBufferSet
         void bind() const;
         void bind( const GQShaderRef& current_shader ) const;
         void unbind() const;
-        bool isBound() const { return _guid == _bound_guid; }
+        bool isBound() const { return _bound_guids.contains(_guid); }
 
         int  vboId( GQVertexBufferType semantic ) const;
         int  vboId( const QString& name ) const;
@@ -94,12 +96,14 @@ class GQVertexBufferSet
     protected:
         class BufferInfo {
         public:
+            ~BufferInfo() { deleteVBO(); }
             void init( const QString& name, int usage_mode, 
                        int data_type, int width, int length, 
                        const uint8* data_pointer);
 
             const uint8* dataPointer() const;
             int          dataSize() const;
+            void         deleteVBO();
         public:
             QString _name;
             GQVertexBufferType _semantic;
@@ -124,15 +128,16 @@ class GQVertexBufferSet
 
         int _guid;
 
-        static bool              _gl_buffer_object_bound;
-        static int               _last_used_guid;
-        static int               _bound_guid;
-        static QList<int>        _bound_attribs;
+        static int                 _last_used_guid;
+        static QHash<int,int>      _bound_guids;
+        static QHash<QString, int> _bound_buffers;
 
     protected:
         void add( const BufferInfo& buffer_info );
+        void remove( const BufferInfo& buffer_info );
 
         void bindBuffer( const BufferInfo& info, int attrib ) const;
+        void unbindBuffer( const BufferInfo& info ) const;
 };
 
 #endif
