@@ -17,9 +17,7 @@ See the COPYING file for details.
 #include <QFileInfo>
 #include <QTextStream>
 
-#ifdef MATLAB
 #include "GQMatlabArray.h"
-#endif
 
 GQTexture::GQTexture()
 {
@@ -161,8 +159,7 @@ int GQTexture2D::target() const
 
 bool GQTexture3D::load( const QString& filename )
 {
-    Q_UNUSED(filename);
-#ifdef MATLAB
+
     if (filename.endsWith(".mat"))
     {
         GQMatlabArray array;
@@ -182,7 +179,6 @@ bool GQTexture3D::load( const QString& filename )
                             array.glType(), false, array.data());
         }
     }
-#endif
 
     return false;
 }
