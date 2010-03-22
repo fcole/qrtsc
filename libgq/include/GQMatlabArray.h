@@ -22,6 +22,7 @@ public:
     int glType() const { return _gl_type; }
 
     void convertToFloat();
+    void normalize();
 
     void clear();
 

@@ -2,8 +2,10 @@
 #include "GQInclude.h"
 
 #ifdef GQ_LINK_MATLAB
-#include "matrix.h"
-#include "mat.h"
+#   include "matrix.h"
+#   include "mat.h"
+#else
+#   include "float.h"
 #endif
 
 GQMatlabArray::GQMatlabArray()
@@ -69,7 +71,7 @@ bool GQMatlabArray::load(const QString& filename)
     if (num_dims < 2 || num_dims > 3)
     {
         qWarning("GQMatlabArray::load: unsupported number of dimensions %d",
-                num_dims);
+                (int)num_dims);
         mxDestroyArray(pa);
         return false;
     }
@@ -150,5 +152,39 @@ void GQMatlabArray::convertToFloat()
 
     delete _data;
     _data = reinterpret_cast<char*>(new_data);
+}
+
+void GQMatlabArray::normalize()
+{
+    if (_gl_type == GL_DOUBLE)
+    {
+        double min = FLT_MAX;
+        double max = -FLT_MAX;
+        double* p = dataDouble();
+        for (int i = 0; i < _width*_height*_depth; i++) 
+        {
+            if (p[i] < min)
+                min = p[i];
+            if (p[i] > max)
+                max = p[i];
+        }
+        for (int i = 0; i < _width*_height*_depth; i++) 
+            p[i] = (p[i] - min) / (max - min);
+    }
+    else if (_gl_type == GL_FLOAT)
+    {
+        float min = FLT_MAX;
+        float max = -FLT_MAX;
+        float* p = dataFloat();
+        for (int i = 0; i < _width*_height*_depth; i++) 
+        {
+            if (p[i] < min)
+                min = p[i];
+            if (p[i] > max)
+                max = p[i];
+        }
+        for (int i = 0; i < _width*_height*_depth; i++) 
+            p[i] = (p[i] - min) / (max - min);
+    }
 }
 

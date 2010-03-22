@@ -87,6 +87,13 @@ bool GQShaderRef::setUniform2f( const QString& name, float a, float b ) const
     return true;
 }
 
+bool GQShaderRef::setUniform3f( const QString& name, float a, float b, 
+                                float c) const
+{
+    glUniform3f(uniformLocationExistsCheck(name), a, b, c);
+    return true;
+}
+
 bool GQShaderRef::setUniform3fv( const QString& name, const float* value ) const
 {
     glUniform3fv(uniformLocationExistsCheck(name), 1, value );

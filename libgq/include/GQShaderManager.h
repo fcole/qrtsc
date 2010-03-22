@@ -55,6 +55,8 @@ class GQShaderRef
         bool setUniform1f( const QString& name, float value ) const;
         bool setUniform1i( const QString& name, int value ) const;
         bool setUniform2f( const QString& name, float a, float b ) const;
+        bool setUniform3f( const QString& name, float a, float b,
+                           float c ) const;
         bool setUniform3fv( const QString& name, const float* value ) const;
         bool setUniform4f( const QString& name, float a, float b, 
                            float c, float d ) const;

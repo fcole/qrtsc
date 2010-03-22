@@ -169,10 +169,12 @@ bool GQTexture3D::load( const QString& filename )
             if (array.glType() == GL_DOUBLE)
                 array.convertToFloat();
 
+            array.normalize();
+
             GLenum format = GL_LUMINANCE;
-            GLenum internal_format = GL_RGBA;
+            GLenum internal_format = GL_LUMINANCE;
             if (array.glType() == GL_FLOAT)
-                internal_format = GL_RGBA32F_ARB;
+                internal_format = GL_LUMINANCE32F_ARB;
 
             return create(array.width(), array.height(), array.depth(),
                             internal_format, format, 

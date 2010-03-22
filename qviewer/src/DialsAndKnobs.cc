@@ -15,6 +15,8 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QVBoxLayout>
+#include <QListView>
+#include <QFileSystemModel>
 
 const int UPDATE_LAYOUT_EVENT = QEvent::User + 1;
 
@@ -25,6 +27,7 @@ dkValue::dkValue(const QString& name, dkLocation location)
 {
     _name = name;
     _location = location;
+    _last_change_frame_number = 0;
     add(this);
 }
 
@@ -44,6 +47,16 @@ QHash<QString, dkValue*>& dkValue::values_hash()
 {
     static QHash<QString, dkValue*>* table = new QHash<QString, dkValue*>;
     return *table;
+}
+
+bool dkValue::changedLastFrame() const
+{
+    if (DialsAndKnobs::instance() &&
+        _last_change_frame_number == 
+            DialsAndKnobs::instance()->frameCounter() - 1)
+        return true;
+    
+    return false;
 }
 
 void dkValue::add(dkValue* value)
@@ -134,6 +147,10 @@ void dkFloat::setValue(double f)
     if (_value != f)
     {
         _value = f;
+        if (DialsAndKnobs::instance())
+            _last_change_frame_number = 
+                DialsAndKnobs::instance()->frameCounter();
+        
         emit valueChanged(_value);
     }
 }
@@ -189,6 +206,9 @@ void dkInt::setValue(int i)
     if (_value != i)
     {
         _value = i;
+        if (DialsAndKnobs::instance())
+            _last_change_frame_number = 
+                DialsAndKnobs::instance()->frameCounter();
         emit valueChanged(_value);
     }
 }
@@ -230,6 +250,9 @@ void dkBool::setValue(bool b)
     if (_value != b)
     {
         _value = b;
+        if (DialsAndKnobs::instance())
+            _last_change_frame_number = 
+                DialsAndKnobs::instance()->frameCounter();
         emit valueChanged(_value);
     }
 }
@@ -276,6 +299,9 @@ void dkStringList::setIndex(int i)
     if (_index != i)
     {
         _index = i;
+        if (DialsAndKnobs::instance())
+            _last_change_frame_number = 
+                DialsAndKnobs::instance()->frameCounter();
         emit indexChanged(_index);
     }
 }
@@ -285,10 +311,59 @@ dkStringList* dkStringList::find(const QString& name)
     return qobject_cast<dkStringList*>(dkValue::find(name));
 }
 
-bool valueSortedBefore(const dkValue* a, const dkValue* b)
+dkImageBrowser::dkImageBrowser(const QString& name, const QString& dir)
+    : dkValue(name, DK_PANEL)
 {
-    return a->name().toLower() < b->name().toLower();
-} 
+    _root_dir = dir;
+    _model = NULL;
+    _view = NULL;
+}
+
+bool dkImageBrowser::load(QDomElement& element)
+{
+    if (element.tagName() != "image_browser")
+        return false;
+
+    return true;
+}
+
+bool dkImageBrowser::save(QDomDocument& doc, QDomElement& root) const
+{
+    QDomElement element = doc.createElement("image_browser");
+    root.appendChild(element);
+    return true;
+}
+
+QString dkImageBrowser::filename() const
+{
+    if (_view && _view->currentIndex().isValid() && 
+        !_model->isDir(_view->currentIndex()))
+        return _model->filePath(_view->currentIndex());
+
+    return QString();
+}
+
+void dkImageBrowser::itemClicked(const QModelIndex& index)
+{
+    if (DialsAndKnobs::instance())
+        _last_change_frame_number = 
+            DialsAndKnobs::instance()->frameCounter();
+    emit selectionChanged(index);
+}
+         
+void dkImageBrowser::setModelAndView(QFileSystemModel* model, QListView* view)
+{
+    _model = model;
+    _view = view;
+    _model->setRootPath(_root_dir);
+}
+
+dkImageBrowser* dkImageBrowser::find(const QString& name)
+{
+    return qobject_cast<dkImageBrowser*>(dkValue::find(name));
+}
+
+
 
 // DialsAndKnobs
 DialsAndKnobs::DialsAndKnobs(QMainWindow* parent) 
@@ -302,6 +377,7 @@ DialsAndKnobs::DialsAndKnobs(QMainWindow* parent)
     setObjectName("dials_and_knobs");
     _parent_menu_bar = parent->menuBar();
     _in_load = false;
+    _frame_counter = 0;
 
     updateLayout();
 }
@@ -385,6 +461,26 @@ QDomElement DialsAndKnobs::domElement(const QString& name,
     return element;
 }
 
+class ArbitraryPrecisionSpinBox : public QDoubleSpinBox
+{
+  public:
+    ArbitraryPrecisionSpinBox(QWidget* parent = 0) : 
+        QDoubleSpinBox(parent)
+    {
+        setDecimals(15);
+        setKeyboardTracking(false);
+    }
+
+    virtual QString textFromValue( double value ) const
+    {
+        QString str = QDoubleSpinBox::textFromValue(value);
+        int last_non_zero = str.lastIndexOf(QRegExp("[^0]"));
+        if (str[last_non_zero] == QWidget::locale().decimalPoint())
+            last_non_zero--;
+        return str.left(last_non_zero+1);
+    }
+};
+
 void DialsAndKnobs::addFloatWidgets(dkFloat* dk_float)
 {
     QString base = splitBase(dk_float->name());
@@ -393,7 +489,7 @@ void DialsAndKnobs::addFloatWidgets(dkFloat* dk_float)
     int row = layout->rowCount();
 
     layout->addWidget(new QLabel(base), row, 0);
-    QDoubleSpinBox* spin_box = new QDoubleSpinBox;
+    ArbitraryPrecisionSpinBox* spin_box = new ArbitraryPrecisionSpinBox;
     spin_box->setMinimum(dk_float->lowerLimit());
     spin_box->setMaximum(dk_float->upperLimit());
     spin_box->setSingleStep(dk_float->stepSize());
@@ -493,7 +589,7 @@ void DialsAndKnobs::addStringListWidgets(dkStringList* dk_string_list)
     }
     else
     {
-        // Note: This code currently doesn't support updating the
+        // Note: This currently doesn't support updating the
         // action group from code.
 
         QMenu* group_menu;
@@ -507,7 +603,8 @@ void DialsAndKnobs::addStringListWidgets(dkStringList* dk_string_list)
         dk_string_list->_signal_mapper = new QSignalMapper(this);
         for (int i = 0; i < dk_string_list->stringList().size(); i++)
         {
-            QAction* action = new QAction(dk_string_list->stringList()[i], action_group);
+            QAction* action = 
+                new QAction(dk_string_list->stringList()[i], action_group);
             action->setCheckable(true);
             menu->addAction(action);
             if (i == 0) 
@@ -522,6 +619,38 @@ void DialsAndKnobs::addStringListWidgets(dkStringList* dk_string_list)
                 this, SLOT(dkValueChanged()));
     }
 }
+
+void DialsAndKnobs::addImageBrowserWidgets(dkImageBrowser* dk_image_browser)
+{
+
+    QString base = splitBase(dk_image_browser->name());
+    QString group = splitGroup(dk_image_browser->name());
+
+    QGridLayout* layout = findOrCreateLayout(group);
+    int row = layout->rowCount();
+
+    layout->addWidget(new QLabel(base), row, 0);
+
+    // Might want to make this model deallocate somehow, but it's tricky...
+    QFileSystemModel* model = new QFileSystemModel;
+    QListView* list_view = new QListView;
+    list_view->setModel(model);
+    list_view->setRootIndex(model->index(dk_image_browser->_root_dir));
+    list_view->setViewMode(QListView::IconMode);
+    layout->addWidget(list_view, row+1, 0, 1, 2);
+
+    dk_image_browser->setModelAndView(model, list_view);
+
+    connect(list_view, SIGNAL(clicked(const QModelIndex&)), 
+            dk_image_browser, SLOT(itemClicked(const QModelIndex&)));
+    connect(dk_image_browser, SIGNAL(selectionChanged(const QModelIndex&)), 
+        this, SLOT(dkValueChanged()));
+}
+
+bool valueSortedBefore(const dkValue* a, const dkValue* b)
+{
+    return a->name().toLower() < b->name().toLower();
+} 
 
 void DialsAndKnobs::updateLayout()
 {
@@ -555,6 +684,10 @@ void DialsAndKnobs::updateLayout()
         else if (qobject_cast<dkStringList*>(values[i])) 
         {
             addStringListWidgets(qobject_cast<dkStringList*>(values[i])); 
+        }
+        else if (qobject_cast<dkImageBrowser*>(values[i])) 
+        {
+            addImageBrowserWidgets(qobject_cast<dkImageBrowser*>(values[i])); 
         }
         else
         {

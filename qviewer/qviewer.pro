@@ -16,10 +16,6 @@ win32 {
         TRIMESH = trimeshd
     } else {
         TRIMESH = trimesh
-        DPIX = dpix
-        CONFIG(cuda) {
-            CUDPPLIB = cudpp32
-        }
     }
     
 }
@@ -38,6 +34,14 @@ else {
         DEFINES += LINUX
         UNAME = Linux
     }
+}
+
+CONFIG(link_matlab) {
+    macx {
+        MATLAB = /Applications/MATLAB_R2009a.app
+        MATLAB_ARCH = maci
+    }
+    LIBS += -L$${MATLAB}/bin/$${MATLAB_ARCH} -lmat -lmx
 }
 
 QT += opengl xml

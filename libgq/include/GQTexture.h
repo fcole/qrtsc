@@ -38,6 +38,8 @@ class GQTexture
         
         int id() const { return _id; }
         virtual int target() const = 0;
+
+        bool isInitialized() const { return _id >= 0; }
         
         void clear();
 

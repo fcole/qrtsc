@@ -15,12 +15,20 @@ win32 {
 else {
 	TEMPLATE = lib
 
-macx {
-	DEFINES += DARWIN
+    macx {
+        DEFINES += DARWIN
+    }
+    else {
+        DEFINES += LINUX
+    }
 }
-else {
-	DEFINES += LINUX
-}
+
+CONFIG(link_matlab) {
+    macx {
+        MATLAB = /Applications/MATLAB_R2009a.app/extern
+    }
+    DEFINES += GQ_LINK_MATLAB
+    INCLUDEPATH += $${MATLAB}/include
 }
 
 CONFIG += staticlib
