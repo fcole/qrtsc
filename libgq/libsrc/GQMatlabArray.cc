@@ -117,6 +117,7 @@ bool GQMatlabArray::load(const QString& filename)
 
     return true;
 #else
+    Q_UNUSED(filename);
 	return false;
 #endif
 }
