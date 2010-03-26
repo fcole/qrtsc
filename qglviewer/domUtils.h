@@ -2,7 +2,7 @@
 
  Copyright (C) 2002-2008 Gilles Debunne. All rights reserved.
 
- This file is part of the QGLViewer library version 2.3.1.
+ This file is part of the QGLViewer library version 2.3.5.
 
  http://www.libqglviewer.com - contact@libqglviewer.com
 
@@ -20,12 +20,15 @@
 
 *****************************************************************************/
 
+
 #if QT_VERSION > 0x040000
-# include <QDom>
+# include <QGlobal>
+# include <QDomElement>
 # include <QString>
 # include <QStringList>
 # include <QColor>
 #else
+# include <qapplication.h>
 # include <qdom.h>
 # include <qstring.h>
 # include <qstringlist.h>
@@ -43,9 +46,9 @@ private:
   static void warning(const QString& message)
   {
 #if QT_VERSION >= 0x040000
-    qWarning(message.toLatin1().constData());
+    qWarning("%s", message.toLatin1().constData());
 #else
-    qWarning(message.latin1());
+    qWarning("%s", message.latin1());
 #endif
   }
 

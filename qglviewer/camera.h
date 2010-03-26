@@ -2,7 +2,7 @@
 
  Copyright (C) 2002-2008 Gilles Debunne. All rights reserved.
 
- This file is part of the QGLViewer library version 2.3.1.
+ This file is part of the QGLViewer library version 2.3.5.
 
  http://www.libqglviewer.com - contact@libqglviewer.com
 
@@ -153,7 +153,7 @@ namespace qglviewer {
     void setFromModelViewMatrix(const GLdouble* const modelViewMatrix);
     void setFromProjectionMatrix(const float matrix[12]);
 
-  public slots:
+  public Q_SLOTS:
     /*! Sets the Camera position() (the eye), defined in the world coordinate system. */
     void setPosition(const Vec& pos) { frame()->setPosition(pos); };
     void setOrientation(const Quaternion& q);
@@ -165,7 +165,7 @@ namespace qglviewer {
 
     /*! @name Positioning tools */
     //@{
-  public slots:
+  public Q_SLOTS:
     void lookAt(const Vec& target);
     void showEntireScene();
     void fitSphere(const Vec& center, float radius);
@@ -271,7 +271,7 @@ namespace qglviewer {
     virtual void getOrthoWidthHeight(GLdouble& halfWidth, GLdouble& halfHeight) const;
     void getFrustumPlanesCoefficients(GLdouble coef[6][4]) const;
 
-  public slots:
+  public Q_SLOTS:
     void setType(Type type);
 
     /*! Sets the vertical fieldOfView() of the Camera (in radians).
@@ -338,7 +338,7 @@ namespace qglviewer {
     Vec sceneCenter() const { return sceneCenter_; };
     float distanceToSceneCenter() const;
 
-  public slots:
+  public Q_SLOTS:
     void setSceneRadius(float radius);
     void setSceneCenter(const Vec& center);
     bool setSceneCenterFromPixel(const QPoint& pixel);
@@ -348,7 +348,7 @@ namespace qglviewer {
 
     /*! @name Revolve Around Point */
     //@{
- public slots:
+ public Q_SLOTS:
     void setRevolveAroundPoint(const Vec& rap);
     bool setRevolveAroundPointFromPixel(const QPoint& pixel);
 
@@ -370,7 +370,7 @@ namespace qglviewer {
     This ManipulatedCameraFrame defines its position() and orientation() and can translate mouse
     events into Camera displacement. Set using setFrame(). */
     ManipulatedCameraFrame* frame() const { return frame_; };
-  public slots:
+  public Q_SLOTS:
     void setFrame(ManipulatedCameraFrame* const mcf);
     //@}
 
@@ -380,7 +380,7 @@ namespace qglviewer {
    public:
     KeyFrameInterpolator* keyFrameInterpolator(int i) const;
 
-public slots:
+public Q_SLOTS:
     void setKeyFrameInterpolator(int i, KeyFrameInterpolator* const kfi);
 
     virtual void addKeyFrameToPath(int i);
@@ -466,7 +466,7 @@ public slots:
 
     Set to 0.5% of the sceneRadius() by setSceneRadius(). See also setFlySpeed(). */
     float flySpeed() const { return frame()->flySpeed(); };
-  public slots:
+  public Q_SLOTS:
     /*! Sets the Camera flySpeed().
 
     \attention This value is modified by setSceneRadius(). */
@@ -525,7 +525,7 @@ public slots:
     setFieldOfView(). When one of these values is modified, focusDistance() is set to sceneRadius()
     / tan(fieldOfView()/2), which provides good results. */
     float focusDistance() const { return focusDistance_; };
-  public slots:
+  public Q_SLOTS:
     /*! Sets the IODistance(). */
     void setIODistance(float distance) { IODistance_ = distance; };
 
@@ -544,7 +544,7 @@ public slots:
     //@{
   public:
     virtual QDomElement domElement(const QString& name, QDomDocument& document) const;
-  public slots:
+  public Q_SLOTS:
     virtual void initFromDOMElement(const QDomElement& element);
     //@}
 

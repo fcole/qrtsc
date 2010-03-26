@@ -27,6 +27,7 @@ QDir findShadersDirectory( const QString& app_path )
     << QDir::cleanPath(app_path)
     << QDir::cleanPath(app_path + "/../")
     << QDir::cleanPath(app_path + "/../../")
+    << QDir::cleanPath(app_path + "/../../../../")
     << QDir::cleanPath(app_path + "/Contents/MacOS/");
 
     for (int i = 0; i < candidates.size(); i++)

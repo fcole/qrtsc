@@ -2,7 +2,7 @@
 
  Copyright (C) 2002-2008 Gilles Debunne. All rights reserved.
 
- This file is part of the QGLViewer library version 2.3.1.
+ This file is part of the QGLViewer library version 2.3.5.
 
  http://www.libqglviewer.com - contact@libqglviewer.com
 
@@ -218,7 +218,7 @@ public:
     return Vec(a.x*k, a.y*k, a.z*k);
   }
 
-  /*! Returns the product of the vector with a scalar. */
+  /*! Returns the product of a scalar with the vector. */
   friend Vec operator*(float k, const Vec &a)
   {
     return a*k;

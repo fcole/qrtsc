@@ -1,34 +1,27 @@
 CONFIG += debug_and_release
 
-CONFIG(debug) {
-	DBGNAME = debug
-}
-else {
+CONFIG(release, debug|release) {
 	DBGNAME = release
 }
-
-DESTDIR = lib.$${DBGNAME}
+else {
+	DBGNAME = debug
+}
+DESTDIR = $${DBGNAME}
 
 win32 {
 	TEMPLATE = vclib
 }
 else {
 	TEMPLATE = lib
+    DEFINES += HAVE_VA_COPY
 
-    macx {
-        DEFINES += DARWIN
-    }
-    else {
-        DEFINES += LINUX
-    }
-}
-
-CONFIG(link_matlab) {
-    macx {
-        MATLAB = /Applications/MATLAB_R2009a.app/extern
-    }
-    DEFINES += GQ_LINK_MATLAB
-    INCLUDEPATH += $${MATLAB}/include
+	macx {
+		DEFINES += DARWIN
+        QMAKE_CXXFLAGS += -fopenmp
+	}
+	else {
+		DEFINES += LINUX
+	}
 }
 
 CONFIG += staticlib
@@ -38,9 +31,24 @@ TARGET = gq
 
 DEPENDPATH += include
 INCLUDEPATH += include
-INCLUDEPATH += ../trimesh2/include
 
 #Input
 HEADERS += include/GQ*.h
 SOURCES += libsrc/GQ*.cc
 SOURCES += libsrc/GLee.c
+
+# Trimesh2
+INCLUDEPATH += ../trimesh2/include
+
+# Zlib
+INCLUDEPATH += zlib
+SOURCES += zlib/*.c
+win32 {
+	SOURCES += zlib/win32/*.c
+}
+
+# Matio
+INCLUDEPATH += matio
+SOURCES += matio/*.c
+# Matio calls zlib functions with the z_ prefix, so turn that on here.
+#DEFINES += Z_PREFIX

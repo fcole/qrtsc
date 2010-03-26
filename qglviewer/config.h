@@ -2,7 +2,7 @@
 
  Copyright (C) 2002-2008 Gilles Debunne. All rights reserved.
 
- This file is part of the QGLViewer library version 2.3.1.
+ This file is part of the QGLViewer library version 2.3.5.
 
  http://www.libqglviewer.com - contact@libqglviewer.com
 
@@ -28,7 +28,7 @@
 #ifndef QGLVIEWER_CONFIG_H
 #define QGLVIEWER_CONFIG_H
 
-#define QGLVIEWER_VERSION 0x020301
+#define QGLVIEWER_VERSION 0x020305
 
 // Needed for Qt < 4 (?)
 #ifndef QT_CLEAN_NAMESPACE

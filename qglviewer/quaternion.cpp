@@ -2,7 +2,7 @@
 
  Copyright (C) 2002-2008 Gilles Debunne. All rights reserved.
 
- This file is part of the QGLViewer library version 2.3.1.
+ This file is part of the QGLViewer library version 2.3.5.
 
  http://www.libqglviewer.com - contact@libqglviewer.com
 
@@ -31,7 +31,7 @@ using namespace std;
 /*! Constructs a Quaternion that will rotate from the \p from direction to the \p to direction.
 
 Note that this rotation is not uniquely defined. The selected axis is usually orthogonal to \p from
-and \p to. However, this method is robust and can handle small or almost identical vectors. */
+and \p to, minimizing the rotation angle. This method is robust and can handle small or almost identical vectors. */
 Quaternion::Quaternion(const Vec& from, const Vec& to)
 {
   const float epsilon = 1E-10f;
@@ -320,7 +320,8 @@ Use matrix() if you do not need to store this matrix and simply want to alter th
 matrix. See also getInverseMatrix() and Frame::getMatrix(). */
 void Quaternion::getMatrix(GLdouble m[4][4]) const
 {
-  const double q00 = 2.0l * q[0] * q[0];
+
+	const double q00 = 2.0l * q[0] * q[0];
   const double q11 = 2.0l * q[1] * q[1];
   const double q22 = 2.0l * q[2] * q[2];
 

@@ -97,7 +97,7 @@ void GQStats::reset()
     for (int i = _records[COUNTER].size()-1; i >= 0; i--)
     {
         Record& counter = _records[COUNTER][i];
-        if (counter.touches_since_last_reset = 0)
+        if (counter.touches_since_last_reset == 0)
         {
             removeCounter(i);
         }

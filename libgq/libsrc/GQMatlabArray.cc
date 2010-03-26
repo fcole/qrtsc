@@ -1,12 +1,8 @@
 #include "GQMatlabArray.h"
 #include "GQInclude.h"
 
-#ifdef GQ_LINK_MATLAB
-#   include "matrix.h"
-#   include "mat.h"
-#else
-#   include "float.h"
-#endif
+#include "matio.h"
+#include "float.h"
 
 GQMatlabArray::GQMatlabArray()
 {
@@ -49,8 +45,7 @@ double* GQMatlabArray::dataDouble() const
 
 bool GQMatlabArray::load(const QString& filename)
 {
-#ifdef GQ_LINK_MATLAB
-    MATFile* pmat = matOpen(qPrintable(filename), "r");
+    mat_t* pmat = Mat_Open(qPrintable(filename), MAT_ACC_RDONLY);
     if (pmat == NULL)
     {
         qWarning("GQMatlabArray::load: could not open %s",
@@ -58,8 +53,7 @@ bool GQMatlabArray::load(const QString& filename)
         return false;
     }
 
-    const char* name;
-    mxArray* pa = matGetNextVariable(pmat, &name);
+    matvar_t* pa = Mat_VarReadNext(pmat);
     if (pa == NULL)
     {
         qWarning("GQMatlabArray::load: error reading %s",
@@ -67,58 +61,62 @@ bool GQMatlabArray::load(const QString& filename)
         return false;
     }
 
-    mwSize num_dims = mxGetNumberOfDimensions(pa);
-    if (num_dims < 2 || num_dims > 3)
-    {
-        qWarning("GQMatlabArray::load: unsupported number of dimensions %d",
-                (int)num_dims);
-        mxDestroyArray(pa);
-        return false;
-    }
-
-    const mwSize* dims = mxGetDimensions(pa);
-    _width = dims[0];
-    _height = dims[1];
-    if (num_dims > 2)
-        _depth = dims[2];
-    else
-        _depth = 1;
-
-    mxClassID class_id = mxGetClassID(pa);
-    switch (class_id)
-    {
-        case mxUINT8_CLASS  : _gl_type = GL_UNSIGNED_BYTE; 
-                              _type_size = 1; break;
-        case mxUINT32_CLASS : _gl_type = GL_UNSIGNED_INT; 
-                              _type_size = sizeof(unsigned int); 
-                              break;
-        case mxSINGLE_CLASS : _gl_type = GL_FLOAT; 
-                             _type_size = sizeof(float); 
-                             break;
-        case mxDOUBLE_CLASS : _gl_type = GL_DOUBLE; 
-                              _type_size = sizeof(double);
-                              break;
-        default:
-            qWarning("GQMatlabArray::load: unsupported data type");
-            mxDestroyArray(pa);
-            return false;
-    }
-    
-	_data = new char[_type_size*_width*_height*_depth];
-    memcpy(_data, mxGetData(pa), _type_size*_width*_height*_depth);
-
-    mxDestroyArray(pa);
-    if (matClose(pmat) != 0)
+    if (Mat_Close(pmat) != 0)
     {
         qWarning("GQMatlabArray::load: error closing %s",
                 qPrintable(filename));
         return false;
     }
 
+    int num_dims = pa->rank;
+    if (num_dims < 2 || num_dims > 3)
+    {
+        qWarning("GQMatlabArray::load: unsupported number of dimensions %d",
+                (int)num_dims);
+        Mat_VarFree(pa);
+        return false;
+    }
+
+    _width = pa->dims[0];
+    _height = pa->dims[1];
+    if (num_dims > 2)
+        _depth = pa->dims[2];
+    else
+        _depth = 1;
+
+    matio_classes class_id = pa->class_type;
+    switch (class_id)
+    {
+        case MAT_C_UINT8  : _gl_type = GL_UNSIGNED_BYTE; 
+                              _type_size = 1; break;
+        case MAT_C_UINT32 : _gl_type = GL_UNSIGNED_INT; 
+                              _type_size = sizeof(unsigned int); 
+                              break;
+        case MAT_C_SINGLE : _gl_type = GL_FLOAT; 
+                             _type_size = sizeof(float); 
+                             break;
+        case MAT_C_DOUBLE : _gl_type = GL_DOUBLE; 
+                              _type_size = sizeof(double);
+                              break;
+
+        default:
+            qWarning("GQMatlabArray::load: unsupported data type");
+            Mat_VarFree(pa);
+            return false;
+    }
+    
+    try {
+    	_data = new char[_type_size*_width*_height*_depth];
+    } catch (std::bad_alloc&) {
+        qWarning("GQMatlabArray::load: failed to allocate storage space (out of memory?)");
+        Mat_VarFree(pa);
+        return false;
+    }
+
+    memcpy(_data, pa->data, _type_size*_width*_height*_depth);
+    Mat_VarFree(pa);
+
     return true;
-#else
-	return false;
-#endif
 }
 
 void GQMatlabArray::convertToFloat()

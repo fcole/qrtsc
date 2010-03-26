@@ -1,13 +1,12 @@
 CONFIG += debug_and_release
 
-CONFIG(debug) {
-	DBGNAME = debug
-}
-else {
+CONFIG(release, debug|release) {
 	DBGNAME = release
 }
-
-DESTDIR = bin.$${DBGNAME}
+else {
+	DBGNAME = debug
+}
+DESTDIR = $${DBGNAME}
 
 win32 {
     TEMPLATE = vcapp
@@ -29,6 +28,7 @@ else {
             CONFIG -= app_bundle
         }
         LIBS += -framework CoreFoundation
+        QMAKE_CXXFLAGS += -fopenmp
     }
     else {
         DEFINES += LINUX
@@ -36,31 +36,23 @@ else {
     }
 }
 
-CONFIG(link_matlab) {
-    macx {
-        MATLAB = /Applications/MATLAB_R2009a.app
-        MATLAB_ARCH = maci
-    }
-    LIBS += -L$${MATLAB}/bin/$${MATLAB_ARCH} -lmat -lmx
-}
-
 QT += opengl xml
 TARGET = qviewer
 
-PRE_TARGETDEPS += ../libgq/lib.$${DBGNAME}/libgq.a
+PRE_TARGETDEPS += ../libgq/$${DBGNAME}/libgq.a
 DEPENDPATH += ../libgq/include
 INCLUDEPATH += ../libgq/include
-LIBS += -L../libgq/lib.$${DBGNAME} -lgq
+LIBS += -L../libgq/$${DBGNAME} -lgq
 
 PRE_TARGETDEPS += ../trimesh2/lib.$${UNAME}/libtrimesh.a
 DEPENDPATH += ../trimesh2/include
 INCLUDEPATH += ../trimesh2/include
 LIBS += -L../trimesh2/lib.$${UNAME} -l$${TRIMESH}
 
-PRE_TARGETDEPS += ../qglviewer/lib.$${DBGNAME}/libqglviewer.a
+PRE_TARGETDEPS += ../qglviewer/$${DBGNAME}/libqglviewer.a
 DEPENDPATH += ../qglviewer
 INCLUDEPATH += ../qglviewer 
-LIBS += -L../qglviewer/lib.$${DBGNAME} -lqglviewer
+LIBS += -L../qglviewer/$${DBGNAME} -lqglviewer
 DEFINES += QGLVIEWER_STATIC
 
 # Input

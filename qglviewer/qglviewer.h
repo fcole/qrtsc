@@ -2,7 +2,7 @@
 
  Copyright (C) 2002-2008 Gilles Debunne. All rights reserved.
 
- This file is part of the QGLViewer library version 2.3.1.
+ This file is part of the QGLViewer library version 2.3.5.
 
  http://www.libqglviewer.com - contact@libqglviewer.com
 
@@ -27,8 +27,10 @@
 
 #if QT_VERSION >= 0x040000
 # include <QMap>
+# include <QClipboard>
 #else
 # include <qmap.h>
+# include <qclipboard.h>
 #endif
 
 class QTabWidget;
@@ -139,15 +141,15 @@ public:
 	bool cameraIsEdited() const { return cameraIsEdited_; }
 
 
-	public slots:
+	public Q_SLOTS:
 		/*! Sets the state of axisIsDrawn(). Emits the axisIsDrawnChanged() signal. See also toggleAxisIsDrawn(). */
-		void setAxisIsDrawn(bool draw=true) { axisIsDrawn_ = draw; emit axisIsDrawnChanged(draw); if (updateGLOK_) updateGL(); };
+		void setAxisIsDrawn(bool draw=true) { axisIsDrawn_ = draw; Q_EMIT axisIsDrawnChanged(draw); if (updateGLOK_) updateGL(); };
 		/*! Sets the state of gridIsDrawn(). Emits the gridIsDrawnChanged() signal. See also toggleGridIsDrawn(). */
-		void setGridIsDrawn(bool draw=true) { gridIsDrawn_ = draw; emit gridIsDrawnChanged(draw); if (updateGLOK_) updateGL(); };
+		void setGridIsDrawn(bool draw=true) { gridIsDrawn_ = draw; Q_EMIT gridIsDrawnChanged(draw); if (updateGLOK_) updateGL(); };
 		/*! Sets the state of FPSIsDisplayed(). Emits the FPSIsDisplayedChanged() signal. See also toggleFPSIsDisplayed(). */
-		void setFPSIsDisplayed(bool display=true) { FPSIsDisplayed_ = display; emit FPSIsDisplayedChanged(display); if (updateGLOK_) updateGL(); };
+		void setFPSIsDisplayed(bool display=true) { FPSIsDisplayed_ = display; Q_EMIT FPSIsDisplayedChanged(display); if (updateGLOK_) updateGL(); };
 		/*! Sets the state of textIsEnabled(). Emits the textIsEnabledChanged() signal. See also toggleTextIsEnabled(). */
-		void setTextIsEnabled(bool enable=true) { textIsEnabled_ = enable; emit textIsEnabledChanged(enable); if (updateGLOK_) updateGL(); };
+		void setTextIsEnabled(bool enable=true) { textIsEnabled_ = enable; Q_EMIT textIsEnabledChanged(enable); if (updateGLOK_) updateGL(); };
 		void setCameraIsEdited(bool edit=true);
 
 		/*! Toggles the state of axisIsDrawn(). See also setAxisIsDrawn(). */
@@ -196,7 +198,7 @@ public:
 
 	See also backgroundColor(). */
 	QColor foregroundColor() const { return foregroundColor_; };
-	public slots:
+	public Q_SLOTS:
 		/*! Sets the backgroundColor() of the viewer and calls \c qglClearColor(). See also
 		setForegroundColor(). */
 		void setBackgroundColor(const QColor& color) { backgroundColor_=color; qglClearColor(color); };
@@ -230,7 +232,7 @@ public:
 	Do not mismatch this value (that only depends on the scene) with the qglviewer::Camera::revolveAroundPoint(). */
 	qglviewer::Vec sceneCenter() const { return camera()->sceneCenter(); }
 
-	public slots:
+	public Q_SLOTS:
 		/*! Sets the sceneRadius().
 
 		The camera() qglviewer::Camera::flySpeed() is set to 1% of this value by this method. Simple
@@ -277,7 +279,7 @@ public:
 	Default value is \c NULL, meaning that no qglviewer::ManipulatedFrame is set. */
 	qglviewer::ManipulatedFrame* manipulatedFrame() const { return manipulatedFrame_; };
 
-	public slots:
+	public Q_SLOTS:
 		void setCamera(qglviewer::Camera* const camera);
 		void setManipulatedFrame(qglviewer::ManipulatedFrame* frame);
 		//@}
@@ -315,7 +317,7 @@ public:
 	You can also use qglviewer::MouseGrabber::removeFromMouseGrabberPool() to completely disable a
 	MouseGrabber in all the QGLViewers. */
 	bool mouseGrabberIsEnabled(const qglviewer::MouseGrabber* const mouseGrabber) { return !disabledMouseGrabbers_.contains(reinterpret_cast<size_t>(mouseGrabber)); };
-	public slots:
+	public Q_SLOTS:
 		void setMouseGrabber(qglviewer::MouseGrabber* mouseGrabber);
 		//@}
 
@@ -367,7 +369,7 @@ public:
 	/*! Returns the recommended size for the QGLViewer. Default value is 600x400 pixels. */
 	virtual QSize sizeHint() const { return QSize(600, 400); }
 
-	public slots:
+	public Q_SLOTS:
 		void setFullScreen(bool fullScreen=true);
 		void setStereoDisplay(bool stereo=true);
 		/*! Toggles the state of isFullScreen(). See also setFullScreen(). */
@@ -397,7 +399,7 @@ public:
 	// void draw3DText(const qglviewer::Vec& pos, const qglviewer::Vec& normal, const QString& string, GLfloat height=0.1f);
 
 protected:
-	//virtual void drawLight(GLenum light, float scale = 1.0f) const;
+	virtual void drawLight(GLenum light, float scale = 1.0f) const;
 
 private:
 	void displayFPS();
@@ -441,7 +443,7 @@ public:
 	You need to setMouseTracking() to \c true in order to use MouseGrabber (see mouseGrabber()). See
 	details in the QWidget documentation. */
 	bool hasMouseTracking () const;
-	public slots:
+	public Q_SLOTS:
 		/*! Resizes the widget to size \p width by \p height pixels. See also width() and height(). */
 		virtual void resize(int width, int height);
 		/*! Sets the hasMouseTracking() value. */
@@ -450,7 +452,7 @@ protected:
 	/*! Returns \c true when buffers are automatically swapped (default). See details in the QGLWidget
 	documentation. */
 	bool autoBufferSwap() const;
-	protected slots:
+	protected Q_SLOTS:
 		/*! Sets the autoBufferSwap() value. */
 		void setAutoBufferSwap(bool on);
 		//@}
@@ -482,7 +484,7 @@ public:
 	saveAs pop-up dialog otherwise.
 
 	The available formats are those handled by Qt. Classical values are \c "JPEG", \c "PNG",
-	\c "PPM, \c "BMP". Use the following code to get the actual list:
+	\c "PPM", \c "BMP". Use the following code to get the actual list:
 	\code
 	QList<QByteArray> formatList = QImageReader::supportedImageFormats();
 	// or with Qt version 2 or 3:
@@ -522,24 +524,69 @@ public:
 	int snapshotQuality() { return snapshotQuality_; };
 
 	// Qt 2.3 does not support double default value parameters in slots.
-	// Remove "slots" from the following line to compile with Qt 2.3
-	public slots:
-		void saveSnapshot(bool automatic=true, bool overwrite=false);
+	// Remove "Q_SLOTS" from the following line to compile with Qt 2.3
+	public Q_SLOTS:
+	void saveSnapshot(bool automatic=true, bool overwrite=false);
 
-		public slots:
-			void saveSnapshot(const QString& fileName, bool overwrite=false);
-			void setSnapshotFileName(const QString& name);
+	public Q_SLOTS:
+	void saveSnapshot(const QString& fileName, bool overwrite=false);
+	void setSnapshotFileName(const QString& name);
 
-			/*! Sets the snapshotFormat(). */
-			void setSnapshotFormat(const QString& format) { snapshotFormat_ = format; };
-			/*! Sets the snapshotCounter(). */
-			void setSnapshotCounter(int counter) { snapshotCounter_ = counter; };
-			/*! Sets the snapshotQuality(). */
-			void setSnapshotQuality(int quality) { snapshotQuality_ = quality; };
-			bool openSnapshotFormatDialog();
+	/*! Sets the snapshotFormat(). */
+	void setSnapshotFormat(const QString& format) { snapshotFormat_ = format; };
+	/*! Sets the snapshotCounter(). */
+	void setSnapshotCounter(int counter) { snapshotCounter_ = counter; };
+	/*! Sets the snapshotQuality(). */
+	void setSnapshotQuality(int quality) { snapshotQuality_ = quality; };
+	bool openSnapshotFormatDialog();
+	void snapshotToClipboard();
 
 private:
 	bool saveImageSnapshot(const QString& fileName);
+	
+#ifndef DOXYGEN
+	/* This class is used internally for screenshot that require tiling (image size size different
+	from window size). Only in that case, is the private tileRegion_ pointer non null.
+	It then contains the current tiled region, which is used by startScreenCoordinatesSystem
+	to adapt the coordinate system. Not using it would result in a tiled drawing of the parts
+	that use startScreenCoordinatesSystem. Also used by scaledFont for same purposes. */
+	class TileRegion { public : double xMin, yMin, xMax, yMax, textScale; };
+#endif
+
+public:
+	/*! Return a possibly scaled version of \p font, used for snapshot rendering.
+
+	From a user's point of view, this method simply returns \p font and can be used transparently.
+
+	However when internally rendering a screen snapshot using saveSnapshot(), it returns a scaled version 
+	of the font, so that the size of the rendered text on the snapshot is identical to what is displayed on screen, 
+	even if the snapshot uses image tiling to create an image of dimensions different from those of the
+	current window. This scaled version will only be used when saveSnapshot() calls your draw() method
+	to generate the snapshot.
+
+	All your calls to QGLWidget::renderText() function hence should use this method. 
+	\code
+	renderText(x, y, z, "My Text", scaledFont(QFont()));
+	\endcode
+	will guarantee that this text will be properly displayed on arbitrary sized snapshots.	
+
+	Note that this method is not needed if you use drawText() which already calls it internally. */
+	QFont scaledFont(const QFont& font) const {
+	  if (tileRegion_ == NULL)
+	    return font;
+	  else {
+	    QFont f(font);
+	    if (f.pixelSize() == -1)
+#if QT_VERSION >= 0x040000
+	      f.setPointSizeF(f.pointSizeF() * tileRegion_->textScale);
+#else
+	      f.setPointSizeFloat(f.pointSizeFloat() * tileRegion_->textScale);
+#endif
+	    else
+	      f.setPixelSize(f.pixelSize() * tileRegion_->textScale);
+	    return f;
+	  }
+	}
 	//@}
 
 
@@ -558,7 +605,7 @@ public:
 	float bufferTextureMaxU() const { return bufferTextureMaxU_; };
 	/*! Same as bufferTextureMaxU(), but for the v texture coordinate. */
 	float bufferTextureMaxV() const { return bufferTextureMaxV_; };
-	public slots:
+	public Q_SLOTS:
 		void copyBufferToTexture(GLint internalFormat, GLenum format=GL_NONE);
 		//@}
 
@@ -590,7 +637,7 @@ public:
 	animationIsStarted(), you should stopAnimation() first. */
 	int animationPeriod() const { return animationPeriod_; };
 
-	public slots:
+	public Q_SLOTS:
 		/*! Sets the animationPeriod(), in milliseconds. */
 		void setAnimationPeriod(int period) { animationPeriod_ = period; };
 		virtual void startAnimation();
@@ -606,13 +653,13 @@ public:
 		rely on a QTimer signal-slot mechanism.
 
 		See the <a href="../examples/animation.html">animation example</a> for an illustration. */
-		virtual void animate() { emit animateNeeded(); };
+		virtual void animate() { Q_EMIT animateNeeded(); };
 		/*! Calls startAnimation() or stopAnimation(), depending on animationIsStarted(). */
 		void toggleAnimation() { if (animationIsStarted()) stopAnimation(); else startAnimation(); };
 		//@}
 
 public:
-signals:
+Q_SIGNALS:
 	/*! Signal emitted by the default init() method.
 
 	Connect this signal to the methods that need to be called to initialize your viewer or overload init(). */
@@ -701,7 +748,7 @@ public:
 	virtual QString shortcutBindingsString () const { return keyboardString(); }
 #endif
 
-	public slots:
+	public Q_SLOTS:
 		virtual void help();
 		virtual void aboutQGLViewer();
 
@@ -738,7 +785,7 @@ protected:
 
 	\note All the OpenGL specific initializations must be done in this method: the OpenGL context is
 	not yet available in your viewer constructor. */
-	virtual void init() { emit viewerInitialized(); };
+	virtual void init() { Q_EMIT viewerInitialized(); };
 
 	virtual void paintGL();
 	virtual void preDraw();
@@ -821,7 +868,7 @@ public:
 	the content of this buffer. See the \c glSelectBuffer() man page for details. */
 	GLuint* selectBuffer() { return selectBuffer_; };
 
-	public slots:
+	public Q_SLOTS:
 		virtual void select(const QMouseEvent* event);
 		virtual void select(const QPoint& point);
 
@@ -844,17 +891,15 @@ protected:
 	to be able to select. The default select() implementation relies on the \c GL_SELECT, and requires
 	that each selectable element is drawn within a \c glPushName() - \c glPopName() block. A typical
 	usage would be (see the <a href="../examples/select.html">select example</a>):
-	\code
-	void Viewer::drawWithNames()
-	{
-	for (int i=0; i<nbObjects; ++i)
-	{
-	glPushName(i);
-	object(i)->draw();
-	glPopName();
-	}
-	}
-	\endcode
+\code
+void Viewer::drawWithNames() {
+   for (int i=0; i<nbObjects; ++i) {
+      glPushName(i);
+      object(i)->draw();
+      glPopName();
+   }
+}
+\endcode
 
 	The resulting selected name is computed by endSelection(), which setSelectedName() to the integer
 	id pushed by this method (a value of -1 means no selection). Use selectedName() to update your
@@ -885,7 +930,7 @@ protected:
 	enum KeyboardAction { DRAW_AXIS, DRAW_GRID, DISPLAY_FPS, ENABLE_TEXT, EXIT_VIEWER,
 		SAVE_SCREENSHOT, CAMERA_MODE, FULL_SCREEN, STEREO, ANIMATION, HELP, EDIT_CAMERA,
 		MOVE_CAMERA_LEFT, MOVE_CAMERA_RIGHT, MOVE_CAMERA_UP, MOVE_CAMERA_DOWN,
-		INCREASE_FLYSPEED, DECREASE_FLYSPEED };
+		INCREASE_FLYSPEED, DECREASE_FLYSPEED, SNAPSHOT_TO_CLIPBOARD };
 public:
 	int shortcut(KeyboardAction action) const;
 #ifndef DOXYGEN
@@ -901,7 +946,7 @@ public:
 	QtKeyboardModifiers addKeyFrameKeyboardModifiers() const;
 	QtKeyboardModifiers playPathKeyboardModifiers() const;
 
-	public slots:
+	public Q_SLOTS:
 		void setShortcut(KeyboardAction action, int key);
 #ifndef DOXYGEN
 		void setKeyboardAccelerator(KeyboardAction action, int key);
@@ -969,7 +1014,7 @@ public:
 	int wheelHandler(QtKeyboardModifiers modifiers) const;
 	int wheelButtonState(MouseHandler handler, MouseAction action, bool withConstraint=true) const;
 
-	public slots:
+	public Q_SLOTS:
 		void setMouseBinding(int state, MouseHandler handler, MouseAction action, bool withConstraint=true);
 #if QT_VERSION < 0x030000
 		// Two slots cannot have the same name or two default parameters with Qt 2.3.
@@ -978,7 +1023,7 @@ public:
 	void setMouseBinding(int state, ClickAction action, bool doubleClick=false, QtMouseButtons buttonsBefore=Qt::NoButton);
 	void setMouseBindingDescription(int state, QString description, bool doubleClick=false, QtMouseButtons buttonsBefore=Qt::NoButton);
 #if QT_VERSION < 0x030000
-	public slots:
+	public Q_SLOTS:
 #endif
 		void setWheelBinding(QtKeyboardModifiers modifiers, MouseHandler handler, MouseAction action, bool withConstraint=true);
 		void setHandlerKeyboardModifiers(MouseHandler handler, QtKeyboardModifiers modifiers);
@@ -999,7 +1044,7 @@ public:
 	QString stateFileName() const;
 	virtual QDomElement domElement(const QString& name, QDomDocument& document) const;
 
-	public slots:
+	public Q_SLOTS:
 		virtual void initFromDOMElement(const QDomElement& element);
 		virtual void saveStateToFile(); // cannot be const because of QMessageBox
 		virtual bool restoreStateFromFile();
@@ -1070,12 +1115,12 @@ public:
 	virtual void setVisualHintsMask(int mask, int delay = 2000);
 	virtual void drawVisualHints();
 
-	public slots:
+	public Q_SLOTS:
 		virtual void resetVisualHints();
 		//@}
 #endif
 
-		private slots:
+		private Q_SLOTS:
 			// Patch for a Qt bug with fullScreen on startup
 			void delayedFullScreen() { move(prevPos_); setFullScreen(); };
 			void hideMessage();
@@ -1206,8 +1251,10 @@ private:
 
 	// S n a p s h o t s
 	void initializeSnapshotFormats();
+	QImage frameBufferSnapshot();
 	QString snapshotFileName_, snapshotFormat_;
 	int snapshotCounter_, snapshotQuality_;
+	TileRegion* tileRegion_;
 
 	// Q G L V i e w e r   p o o l
 #if QT_VERSION >= 0x040000

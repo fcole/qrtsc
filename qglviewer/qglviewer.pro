@@ -1,16 +1,15 @@
-CONFIG += debug_and_release
-
-CONFIG(debug) {
-	DBGNAME = debug
-}
-else {
-	DBGNAME = release
-}
-
 DEFINES += NO_VECTORIAL_RENDER
 DEFINES += QGLVIEWER_STATIC
 
-DESTDIR = lib.$${DBGNAME}
+CONFIG += debug_and_release
+
+CONFIG(release, debug|release) {
+	DBGNAME = release
+}
+else {
+	DBGNAME = debug
+}
+DESTDIR = $${DBGNAME}
 
 win32 {
 	TEMPLATE = vclib
@@ -18,12 +17,13 @@ win32 {
 else {
 	TEMPLATE = lib
 
-macx {
-	DEFINES += DARWIN
-}
-else {
-	DEFINES += LINUX
-}
+	macx {
+		DEFINES += DARWIN
+        QMAKE_CXXFLAGS += -fopenmp
+	}
+	else {
+		DEFINES += LINUX
+	}
 }
 
 CONFIG += staticlib

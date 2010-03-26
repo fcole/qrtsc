@@ -74,7 +74,7 @@ void Console::msgHandler( QtMsgType type, const char* msg )
     }
 
     _current_msg_console->print( out );
-    fprintf( stderr, qPrintable(out) );
+    fprintf( stderr, "%s", qPrintable(out) );
 
 #ifdef WIN32
     wchar_t wcharstr[1024];

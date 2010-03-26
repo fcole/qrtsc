@@ -97,6 +97,11 @@ bool GQTexture2D::create( const GQImage& image, int target )
         format = GL_RGB;
     else if (image.chan() == 4)
         format = GL_RGBA;
+    else {
+        qCritical("GQTexture2D::create: unsupported number of channels %d",
+                image.chan());
+        return false;
+    }
 
     return create(image.width(), image.height(), format, format, 
                   GL_UNSIGNED_BYTE, image.raster(), target);
@@ -113,6 +118,11 @@ bool GQTexture2D::create( const GQFloatImage& image, int target )
         format = GL_RGB;
     else if (image.chan() == 4)
         format = GL_RGBA;
+    else {
+        qCritical("GQTexture2D::create: unsupported number of channels %d",
+                image.chan());
+        return false;
+    }
 
     GLenum internal_format = GL_RGBA32F_ARB;
 
@@ -159,7 +169,6 @@ int GQTexture2D::target() const
 
 bool GQTexture3D::load( const QString& filename )
 {
-
     if (filename.endsWith(".mat"))
     {
         GQMatlabArray array;
@@ -231,8 +240,9 @@ bool GQTexture3D::genTexture(int internal_format, int format,
                  format, type, data);
     }
 #else
-    glTexImage3D(target, 0, internal_format, _width, _height, _depth, 0, 
-             format, type, data);
+	Q_UNUSED(use_mipmaps);
+	glTexImage3D(target, 0, internal_format, _width, _height, _depth, 0, 
+                 format, type, data);
 #endif
     
     glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapMode);
