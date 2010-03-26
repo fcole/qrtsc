@@ -117,6 +117,13 @@ bool GQMatlabArray::load(const QString& filename)
     Mat_VarFree(pa);
 
     return true;
+<<<<<<< local
+=======
+#else
+    Q_UNUSED(filename);
+	return false;
+#endif
+>>>>>>> other
 }
 
 void GQMatlabArray::convertToFloat()
