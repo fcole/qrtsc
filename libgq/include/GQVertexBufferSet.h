@@ -6,7 +6,7 @@ Copyright (c) 2009 Forrester Cole
 
 An abstraction to manage OpenGL vertex arrays and vertex buffer objects. 
 A buffer set is stored on the CPU side by default, but may be copied to
-the GPU using copyDataToVBOs().
+the GPU using copyToVBOs().
 
 libgq is distributed under the terms of the GNU General Public License.
 See the COPYING file for details.
@@ -28,12 +28,13 @@ enum GQVertexBufferType
     GQ_VERTEX, 
     GQ_NORMAL, 
     GQ_COLOR, 
-    GQ_TEXCOORD, 
+    GQ_TEXCOORD,
+	GQ_INDEX,
     GQ_NUM_VERTEX_BUFFER_TYPES 
 };
 
 const QString GQVertexBufferNames[GQ_NUM_VERTEX_BUFFER_TYPES] = 
-    { "vertex", "normal", "color", "texcoord" }; 
+    { "vertex", "normal", "color", "texcoord", "index" }; 
 
 enum GQVertexBufferUsage 
 { 
@@ -52,21 +53,31 @@ class GQVertexBufferSet
         void clear();
 
         // Note: these calls do *not* copy the data out of the sources unless
-        // copyDataToVBOs is called. Thus, the sources cannot be destroyed after being
+        // copyToVBOs is called. Thus, the sources cannot be destroyed after being
         // added. (should this change?)
-        void add( GQVertexBufferType semantic, int width, const QVector<float>& data );
-        void add( GQVertexBufferType semantic, int width, const QVector<uint8>& data );
-        void add( GQVertexBufferType semantic, int width, int format, int length );
-        void add( GQVertexBufferType semantic, const QVector<vec>& data );
+		void add( GQVertexBufferType semantic, int width, int format, int length );
+		void add( GQVertexBufferType semantic, int width, const QVector<float>& data );
+        void add( GQVertexBufferType semantic, int width, const QVector<int>& data );
+		void add( GQVertexBufferType semantic, int width, const QVector<uint8>& data );
+		void add( GQVertexBufferType semantic, int width, const std::vector<int>& data );
+		void add( GQVertexBufferType semantic, const QVector<vec>& data );
         void add( GQVertexBufferType semantic, const std::vector<vec>& data );
-        void add( const QString& name, int width, const QVector<float>& data );
-        void add( const QString& name, int width, const QVector<uint8>& data );
+		void add( GQVertexBufferType semantic, const std::vector<vec2>& data );
         void add( const QString& name, int width, int format, int length );
-        void add( const QString& name, const QVector<vec>& data );
+		void add( const QString& name, int width, const QVector<float>& data );
+		void add( const QString& name, int width, const QVector<int>& data );
+		void add( const QString& name, int width, const QVector<uint8>& data );
+		void add( const QString& name, int width, const std::vector<int>& data );
+		void add( const QString& name, const QVector<vec>& data );
         void add( const QString& name, const std::vector<vec>& data );
+		void add( const QString& name, const std::vector<vec2>& data );
 
         int  numBuffers() const { return _buffers.size(); }
-
+		bool hasBuffer(GQVertexBufferType semantic) const 
+			{ return _buffer_hash.contains(GQVertexBufferNames[semantic]); }
+		bool hasBuffer(const QString& name) const 
+			{ return _buffer_hash.contains(name); };
+	
         void setStartingElement( int element ) { _starting_element = element; }
         void setElementStride( int stride ) { _element_stride = stride; }
         void setUsageMode(GQVertexBufferUsage usage_mode);
@@ -78,21 +89,21 @@ class GQVertexBufferSet
 
         int  vboId( GQVertexBufferType semantic ) const;
         int  vboId( const QString& name ) const;
-        void copyDataToVBOs();
+        void copyToVBOs();
         void deleteVBOs();
         bool vbosLoaded() const;
 
-        void copyFromFBO(const GQFramebufferObject& fbo, int fbo_buffer, 
-                         const QString& vbo_name );
-        void copyFromFBO(const GQFramebufferObject& fbo, int fbo_buffer, 
-                         GQVertexBufferType vbo_semantic );
-        void copyFromSubFBO(const GQFramebufferObject& fbo, int fbo_buffer, 
-                            int x, int y, int width, int height, 
-                            const QString& vbo_name );
-        void copyFromSubFBO(const GQFramebufferObject& fbo, int fbo_buffer, 
-                            int x, int y, int width, int height, 
-                            GQVertexBufferType vbo_semantic );
-
+        void copyFromFBO(const QString& vbo_name,
+						 const GQFramebufferObject& fbo, int fbo_buffer);
+        void copyFromFBO(GQVertexBufferType vbo_semantic, 
+						 const GQFramebufferObject& fbo, int fbo_buffer);
+        void copyFromSubFBO(const QString& vbo_name,
+							const GQFramebufferObject& fbo, int fbo_buffer, 
+                            int x, int y, int width, int height);
+        void copyFromSubFBO(GQVertexBufferType vbo_semantic,
+							const GQFramebufferObject& fbo, int fbo_buffer, 
+                            int x, int y, int width, int height);
+	
     protected:
         class BufferInfo {
         public:

@@ -17,6 +17,9 @@ See the COPYING file for details.
 #include <QFileInfo>
 #include <QStringList>
 
+#include "GQDraw.h"
+using namespace GQDraw;
+
 #include <assert.h>
 
 const int CURRENT_VERSION = 1;
@@ -73,7 +76,7 @@ bool Scene::load( const QString& filename )
         }
         _viewer_state.clear();
         _dials_and_knobs_state.clear();
-        setupMesh();
+		setupMesh();
 
         return true;
     }
@@ -196,30 +199,44 @@ void Scene::setupMesh()
     _trimesh->need_tstrips();
     _trimesh->need_faces();
 
+}
+
+void Scene::setupVertexBufferSet()
+{
+	// Trimesh stores triangle strips as length followed by indices.
+	// Grab them and store the offsets and lengths.
+	_tristrips.clear();
+	const int *t = &_trimesh->tstrips[0];
+	const int *end = t + _trimesh->tstrips.size();
+	while (t < end) {
+		int striplen = *t++;
+		_tristrips.push_back(striplen);
+		t += striplen;
+	}
+	
     _vertex_buffer_set.clear();
     _vertex_buffer_set.add(GQ_VERTEX, _trimesh->vertices);
     _vertex_buffer_set.add(GQ_NORMAL, _trimesh->normals);
-}
-
+	_vertex_buffer_set.add(GQ_INDEX, 1, _trimesh->tstrips);
+	
+	_vertex_buffer_set.copyToVBOs();
+}	
+	
 void Scene::drawMesh(GQShaderRef& shader)
 {
-    Q_UNUSED(shader);
+	if (_vertex_buffer_set.numBuffers() == 0)
+		setupVertexBufferSet();
 
     assert(_trimesh->tstrips.size() > 0);
 
-    _vertex_buffer_set.bind();
+    _vertex_buffer_set.bind(shader);
 
-    // Trimesh stores triangle strips as length followed by indices.
-	const int *t = &_trimesh->tstrips[0];
-	const int *end = t + _trimesh->tstrips.size();
-    // "likely" is a hint to the branch predictor for certain versions of 
-    // gcc.
-	while (likely(t < end)) {
-		int striplen = *t++;
-		glDrawElements(GL_TRIANGLE_STRIP, striplen, GL_UNSIGNED_INT, t);
-		t += striplen;
+	int offset = 1;
+	for (int i = 0; i < _tristrips.size(); i++) {
+		drawElements(_vertex_buffer_set, GL_TRIANGLE_STRIP, offset, _tristrips[i]); 
+		offset += _tristrips[i] + 1; // +1 to skip the length stored in the tristrip array.
 	}
-
+	
     _vertex_buffer_set.unbind();
 }
 

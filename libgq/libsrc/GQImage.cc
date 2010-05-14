@@ -73,6 +73,11 @@ bool GQImage::resize(int w, int h, int c)
     return true; 
 }
 
+void GQImage::setPixelChannel( int x, int y, int c, unsigned char value )
+{
+	_raster[_num_chan * (x + y*_width) + c] = value;
+}
+
 bool GQImage::save( const QString& filename, bool flip)
 {
 	QImage qi( _width, _height, QImage::Format_ARGB32 );
@@ -140,7 +145,7 @@ bool GQImage::load(const QString& filename)
 				_raster[3*i+1] = qGreen(pix);
 				_raster[3*i+2] = qBlue(pix);
 			}
-		}
+		}		
 		return true;
 	}
 	return false;
@@ -223,7 +228,7 @@ void GQFloatImage::setPixelChannel( int x, int y, int c, float value )
 
 bool GQFloatImage::save(const QString& filename, bool flip /* = true */ )
 {
-    if (filename.endsWith("pfm"))
+    if (filename.endsWith("pfm") || filename.endsWith("pbm"))
         return savePFM(filename, flip);
     else if (filename.endsWith("float"))
         return saveFloat(filename, flip);
@@ -426,7 +431,7 @@ bool GQFloatImage::loadPFM(const QString& filename)
 bool GQFloatImage::load(const QString& filename)
 {
     GQImage img;
-	if (filename.endsWith(".pfm"))
+	if (filename.endsWith(".pfm") || filename.endsWith(".pbm"))
 	{
 		return loadPFM(filename);
 	}

@@ -39,6 +39,11 @@ GQShaderRef::GQShaderRef(const GQShaderRef& input)
     *this = input;
 }
 
+bool GQShaderRef::isValid() const
+{
+	return _guid == GQShaderManager::currentProgramRefGuid();
+}
+
 const GQShaderRef& GQShaderRef::operator=(const GQShaderRef& input)
 {
     this->_name = input._name;
@@ -54,7 +59,7 @@ GQShaderRef::~GQShaderRef()
 
 int GQShaderRef::uniformLocation( const QString& name ) const
 {
-    assert( _guid == GQShaderManager::getCurrentProgramRefGuid() );
+    assert( isValid() );
     return GQShaderManager::uniformLocation( _guid, name );
 }
 
@@ -121,21 +126,81 @@ bool GQShaderRef::setUniformMatrix4fv( const QString& name, const float* value )
     return true;
 }
 
+/*bool GQShaderRef::setUniformXform( const QString& name, const xform& xf ) const
+{
+	
+}*/
+
+bool GQShaderRef::setUniformMatrixUpper3x3( const QString& name, const xform& xf ) const
+{
+	const bool transpose = false;
+	float mat[9];
+	for (int c = 0; c < 3; c++)
+		for (int r = 0; r < 3; r++)
+			mat[r + c*3] = xf(r,c);
+	glUniformMatrix3fv(uniformLocationExistsCheck(name), 1, transpose, mat );
+    return true;
+}
+
+bool GQShaderRef::setUniformVec3Array( const QString& name, const QVector<vec>& v, int count ) const
+{
+	int num_to_set = (count > 0) ? count : v.size();
+	if (num_to_set > v.size()) {
+		qWarning("GQShaderRef::setUniformVec3Array: for %s, tried to set %d values, but only have %d",
+				 qPrintable(name), num_to_set, v.size());
+		num_to_set = v.size();
+	}
+	for (int i = 0; i < num_to_set; i++)
+	{
+		QString i_name = name + QString("[%1]").arg(i);
+		int loc = uniformLocation(i_name);
+		if (loc < 0) {
+			qWarning("GQShaderRef::setUniformVec3Array: failed to set %s[%d], %d entries left",
+					 qPrintable(name), i, num_to_set - i);
+			return false;
+		}
+		glUniform3fv(loc, 1, v[i]);
+	}
+	return true;
+}	
+
+bool GQShaderRef::setUniformVec2Array( const QString& name, const QVector<vec2>& v, int count ) const
+{
+	int num_to_set = (count > 0) ? count : v.size();
+	if (num_to_set > v.size()) {
+		qWarning("GQShaderRef::setUniformVec3Array: for %s, tried to set %d values, but only have %d",
+				 qPrintable(name), num_to_set, v.size());
+		num_to_set = v.size();
+	}
+	for (int i = 0; i < num_to_set; i++)
+	{
+		QString i_name = name + QString("[%1]").arg(i);
+		int loc = uniformLocation(i_name);
+		if (loc < 0) {
+			qWarning("GQShaderRef::setUniformVec2Array: failed to set %s[%d], %d entries left",
+					 qPrintable(name), i, num_to_set - i);
+			return false;
+		}
+		glUniform2fv(loc, 1, v[i]);
+	}
+	return true;
+}	
+
 int GQShaderRef::attribLocation( const QString& name ) const
 {
-    assert( _guid == GQShaderManager::getCurrentProgramRefGuid() );
+    assert( isValid() );
     return GQShaderManager::attribLocation( _guid, name );
 }
         
 bool GQShaderRef::bindNamedTexture( const QString& name, const GQTexture* tex ) const
 {
-    assert( _guid == GQShaderManager::getCurrentProgramRefGuid() );
+    assert( isValid() );
     return GQShaderManager::bindNamedTexture(_guid, name, tex);
 }
 
 void GQShaderRef::unbind()
 {
-    assert( _guid == GQShaderManager::getCurrentProgramRefGuid() );
+    assert( isValid() );
     GQShaderManager::unbindProgram( _guid );
 }
 
@@ -331,7 +396,7 @@ GQShaderRef GQShaderManager::bindProgram( const QString& name )
     int program_index = _program_hash.value(name, -1);
     if (program_index < 0 || program_index >= (int)(_programs.size()))
     {
-        qFatal("GQShaderManger::bindProgram: could not find program %s", 
+        qCritical("GQShaderManger::bindProgram: could not find program %s", 
             qPrintable(name));
         return GQShaderRef();
     }

@@ -28,6 +28,8 @@ public:
     unsigned char* raster() { return _raster; } 
     const unsigned char* raster() const { return _raster; } 
 	unsigned char pixel( int x, int y, int c ) const { return _raster[_num_chan * (x + y*_width) + c]; }
+	
+	void setPixelChannel( int x, int y, int c, unsigned char value );
    
     bool resize(int w, int h, int c);
     void copy( const GQImage& from )

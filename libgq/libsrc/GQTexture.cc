@@ -38,37 +38,9 @@ void GQTexture::clear()
     _id = -1;
 }
         
-bool GQTexture2D::genTexture(int width, int height, int internal_format, 
-                             int format, int type, const void *data)
-{
-    glGenTextures(1, (GLuint*)(&_id));
-    glBindTexture(_target, _id);
-    
-    glTexImage2D(_target, 0, internal_format, width, height, 0, 
-                 format, type, data);
-
-    int wrapMode = _target == GL_TEXTURE_2D ? GL_REPEAT : GL_CLAMP_TO_EDGE;
-    int filterMode = _target == GL_TEXTURE_2D ? GL_LINEAR : GL_NEAREST;
-    
-    glTexParameteri(_target, GL_TEXTURE_WRAP_S, wrapMode);
-    glTexParameteri(_target, GL_TEXTURE_WRAP_T, wrapMode);
-    glTexParameteri(_target, GL_TEXTURE_MAG_FILTER, filterMode);
-    glTexParameteri(_target, GL_TEXTURE_MIN_FILTER, filterMode);
-
-    int error = glGetError();
-    if (error)
-    {
-        qWarning("\nGQTexture2D::createGLTexture : GL error: %s\n", 
-                gluErrorString(error));
-        return false;
-    } 
-
-    return true;
-}
-        
 bool GQTexture2D::load( const QString& filename )
 {
-    if (filename.endsWith(".pfm"))
+    if (filename.endsWith(".pfm") || filename.endsWith(".pbm"))
     {
         GQFloatImage image;
         if (!image.load(filename))
@@ -137,7 +109,32 @@ bool GQTexture2D::create(int width, int height, int internal_format, int format,
     _width = width;
     _height = height;
     
-    return genTexture(width, height, internal_format, format, type, data);
+	glGenTextures(1, (GLuint*)(&_id));
+    glBindTexture(_target, _id);
+    
+    int wrap_mode = (_target == GL_TEXTURE_2D) ? GL_REPEAT : GL_CLAMP_TO_EDGE;
+    int filter_mag_mode = (_target == GL_TEXTURE_2D) ? GL_LINEAR : GL_NEAREST;
+	int filter_min_mode = (_target == GL_TEXTURE_2D) ? GL_LINEAR : GL_NEAREST;
+	
+	glTexImage2D(_target, 0, internal_format, width, height, 0, 
+				 format, type, data);
+    
+    glTexParameteri(_target, GL_TEXTURE_WRAP_S, wrap_mode);
+    glTexParameteri(_target, GL_TEXTURE_WRAP_T, wrap_mode);
+    glTexParameteri(_target, GL_TEXTURE_MAG_FILTER, filter_mag_mode);
+    glTexParameteri(_target, GL_TEXTURE_MIN_FILTER, filter_min_mode);
+	
+	glBindTexture(_target, 0);
+	
+    int error = glGetError();
+    if (error)
+    {
+        qWarning("\nGQTexture2D::createGLTexture : GL error: %s\n", 
+				 gluErrorString(error));
+        return false;
+    } 
+	
+    return true;
 }
 
 bool GQTexture2D::bind() const
@@ -151,21 +148,42 @@ void GQTexture2D::unbind() const
     glBindTexture(_target, 0);
 }
 
-void GQTexture2D::enable() const
-{
-    glEnable(_target);
-}
-
-void GQTexture2D::disable() const
-{
-    glDisable(_target);
-}
-
 int GQTexture2D::target() const
 {
     return _target;
 }
 
+void GQTexture2D::setMipmapping(bool enable) const
+{
+	int filter_min_mode;
+	if (enable)
+		filter_min_mode = GL_LINEAR_MIPMAP_LINEAR;
+	else
+		filter_min_mode = (_target == GL_TEXTURE_2D) ? GL_LINEAR : GL_NEAREST;
+	
+	bind();
+	glTexParameteri(_target, GL_TEXTURE_MIN_FILTER, filter_min_mode);
+	unbind();
+}
+
+void GQTexture2D::setAnisotropicFiltering(bool enable) const
+{
+	GLfloat aniso = 1.0f;
+	if (enable)
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &aniso);
+
+	bind();
+	glTexParameterf(_target, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
+	unbind();
+}
+
+void GQTexture2D::generateMipmaps()
+{
+	bind();
+	glGenerateMipmap(_target);
+	setMipmapping(true);
+	unbind();
+}
 
 bool GQTexture3D::load( const QString& filename )
 {
@@ -187,7 +205,7 @@ bool GQTexture3D::load( const QString& filename )
 
             return create(array.width(), array.height(), array.depth(),
                             internal_format, format, 
-                            array.glType(), false, array.data());
+                            array.glType(), array.data());
         }
     }
 
@@ -196,60 +214,36 @@ bool GQTexture3D::load( const QString& filename )
 
 bool GQTexture3D::create(int width, int height, int depth, 
                          int internal_format, int format, 
-                         int type, bool use_mipmaps, 
-                         const void *data)
+                         int type, const void *data)
 {
     _width = width;
     _height = height;
     _depth = depth;
     
-    return genTexture(internal_format, format, type, 
-                      use_mipmaps, data);
+    return genTexture(internal_format, format, type, data);
 }
 
 bool GQTexture3D::genTexture(int internal_format, int format, 
-                             int type, bool use_mipmaps,
-                             const void *data)
+                             int type, const void *data)
 {
     int target = GL_TEXTURE_3D;
-    int wrapMode = GL_REPEAT;
-    int filterMagMode = GL_LINEAR;
-    int filterMinMode = GL_LINEAR;
+    int wrap_mode = GL_REPEAT;
+    int filter_mag_mode = GL_LINEAR;
+    int filter_min_mode = GL_LINEAR;
 
     glGenTextures(1, (GLuint*)(&_id));
     glBindTexture(target, _id);
     
-    Q_UNUSED(use_mipmaps);
-#if 0
-    if (use_mipmaps)
-    {
-        int error = gluBuild3DMipmaps(target, internal_format, 
-                           _width, _height, _depth, format, 
-                           type, data);
-        if (error)
-        {
-            qWarning("\nGQTexture3D::createGLTexture : gluBuild3DMipmaps error: %s\n", 
-                    gluErrorString(error));
-            return false;
-        } 
-        filterMinMode = GL_LINEAR_MIPMAP_LINEAR;
-    }
-    else
-    {
-        glTexImage3D(target, 0, internal_format, _width, _height, _depth, 0, 
-                 format, type, data);
-    }
-#else
-	Q_UNUSED(use_mipmaps);
 	glTexImage3D(target, 0, internal_format, _width, _height, _depth, 0, 
                  format, type, data);
-#endif
     
-    glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapMode);
-    glTexParameteri(target, GL_TEXTURE_WRAP_T, wrapMode);
-    glTexParameteri(target, GL_TEXTURE_WRAP_R, wrapMode);
-    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filterMagMode);
-    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filterMinMode);
+    glTexParameteri(target, GL_TEXTURE_WRAP_S, wrap_mode);
+    glTexParameteri(target, GL_TEXTURE_WRAP_T, wrap_mode);
+    glTexParameteri(target, GL_TEXTURE_WRAP_R, wrap_mode);
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter_mag_mode);
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filter_min_mode);
+	
+    glBindTexture(target, 0);
 
     int error = glGetError();
     if (error)
@@ -274,13 +268,34 @@ void GQTexture3D::unbind() const
     glBindTexture(GL_TEXTURE_3D, 0);
 }
 
-void GQTexture3D::enable() const
+void GQTexture3D::setMipmapping(bool enable) const
 {
-    glEnable(GL_TEXTURE_3D);
+	int filter_min_mode;
+	if (enable)
+		filter_min_mode = GL_LINEAR_MIPMAP_LINEAR;
+	else
+		filter_min_mode = GL_LINEAR;
+	
+	bind();
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, filter_min_mode);
+	unbind();
 }
 
-void GQTexture3D::disable() const
+void GQTexture3D::setAnisotropicFiltering(bool enable) const
 {
-    glDisable(GL_TEXTURE_3D);
+	GLfloat aniso = 1.0f;
+	if (enable)
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &aniso);
+	
+	bind();
+	glTexParameterf(GL_TEXTURE_3D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
+	unbind();
 }
 
+void GQTexture3D::generateMipmaps()
+{
+	bind();
+	glGenerateMipmap(GL_TEXTURE_3D);
+	setMipmapping(true);
+	unbind();
+}

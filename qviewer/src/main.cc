@@ -54,7 +54,7 @@ int main( int argc, char** argv )
 
     QApplication app(argc, argv);
     QDir shaders_dir = findShadersDirectory(app.applicationDirPath());
-    QDir working_dir = QDir::home();
+    QDir working_dir = QDir::current();
 
     GQShaderManager::setShaderDirectory(shaders_dir);
 

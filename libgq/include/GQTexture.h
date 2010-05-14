@@ -28,9 +28,7 @@ class GQTexture
         virtual bool load( const QString& filename ) = 0;
 
         virtual bool bind() const = 0;
-        virtual void unbind() const = 0;
-        virtual void enable() const = 0;
-        virtual void disable() const = 0;        
+        virtual void unbind() const = 0;     
         
         virtual unsigned int width() const = 0;
         virtual unsigned int height() const = 0;
@@ -53,24 +51,23 @@ class GQTexture2D : public GQTexture
         bool load( const QString& filename );
         bool create( const GQImage& image, int target = GL_TEXTURE_2D );
         bool create( const GQFloatImage& image, int target = GL_TEXTURE_2D );
-        bool create(int width, int height, int internal_format, 
-                    int format, int type, const void *data, 
-                    int target = GL_TEXTURE_2D);
+		bool create(int width, int height, int internal_format, 
+					int format, int type, const void *data, int target);
+	
         bool bind() const;
         void unbind() const;
-        void enable() const; 
-        void disable() const;
+        
+		void setMipmapping(bool enable) const;
+		void setAnisotropicFiltering(bool enable) const;
+	
+		void generateMipmaps();
         
         unsigned int width() const { return _width; }
         unsigned int height() const { return _height; }
         unsigned int depth() const { return 1; }
 
         int target() const;
-
-    protected:
-        bool genTexture(int width, int height, int internal_format, 
-                        int format, int type, const void *data);
-    
+		    
     protected:
         int _target;
         int _width;
@@ -82,11 +79,14 @@ class GQTexture3D : public GQTexture
     public:
         bool load( const QString& filename );
         bool create(int width, int height, int depth, int internal_format, 
-                    int format, int type, bool use_mipmaps, const void *data);
+                    int format, int type, const void *data);
         bool bind() const;
         void unbind() const;
-        void enable() const; 
-        void disable() const;
+	
+		void setMipmapping(bool enable) const;
+		void setAnisotropicFiltering(bool enable) const;
+	
+		void generateMipmaps();
         
         unsigned int width() const { return _width; }
         unsigned int height() const { return _height; }
@@ -96,7 +96,7 @@ class GQTexture3D : public GQTexture
 
     protected:
         bool genTexture(int internal_format, int format, int type, 
-                        bool use_mipmaps, const void *data);
+						const void *data);
     
     protected:
         int _width;

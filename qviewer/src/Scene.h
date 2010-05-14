@@ -44,6 +44,7 @@ public:
 
 protected:
     void setupMesh();
+	void setupVertexBufferSet();
 
     void setupLighting(GQShaderRef& shader);
     void drawMesh(GQShaderRef& shader);
@@ -51,6 +52,7 @@ protected:
 protected:
     TriMesh*            _trimesh;
     GQVertexBufferSet   _vertex_buffer_set;
+	QVector<int>		_tristrips;
     QString             _trimesh_filename;
 
     xform               _camera_transform;

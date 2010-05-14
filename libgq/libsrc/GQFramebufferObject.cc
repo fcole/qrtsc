@@ -185,12 +185,19 @@ bool GQFramebufferObject::initGL(int target, int format,
     return true;
 }
 
-void GQFramebufferObject::bind() const
+void GQFramebufferObject::bind(uint32 clear_behavior) const
 {
     assert(_fbo >= 0);
     assert(_bound_guid == 0);
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbo);
     glPushAttrib(GL_VIEWPORT_BIT | GL_COLOR_BUFFER_BIT);
+	
+	if (clear_behavior == GQ_CLEAR_BUFFER)
+	{
+		drawToAllBuffers();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	}
+	
     _bound_guid = _guid;
 }
 
@@ -203,13 +210,13 @@ void GQFramebufferObject::unbind() const
     _bound_guid = 0;
 }
 
-void GQFramebufferObject::drawBuffer( int which )
+void GQFramebufferObject::drawBuffer( int which ) const
 {
     assert( which >= 0 && which < _num_color_attachments );
     glDrawBuffer( GL_COLOR_ATTACHMENT0_EXT + which );
 }
 
-void GQFramebufferObject::drawToAllBuffers()
+void GQFramebufferObject::drawToAllBuffers() const
 {
     GLenum render_targets[] = { GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT,
                                 GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT,

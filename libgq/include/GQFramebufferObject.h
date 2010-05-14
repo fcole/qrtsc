@@ -27,6 +27,9 @@ const uint32 GQ_COORDS_NORMALIZED = 0x1;
 const uint32 GQ_FORMAT_RGBA_FLOAT = 0x0;
 const uint32 GQ_FORMAT_RGBA_BYTE = 0x1;
 
+const uint32 GQ_KEEP_BUFFER = 0x0;
+const uint32 GQ_CLEAR_BUFFER = 0x1;
+
 class GQFramebufferObject
 {
 public:
@@ -48,12 +51,12 @@ public:
     bool initGL( int target, int format, uint32 attachments, 
         int num_color_attachments, int width, int height );
 
-    void bind() const;
+    void bind(uint32 clear_behavior = GQ_KEEP_BUFFER) const;
     void unbind() const;
     bool isBound() const { return _bound_guid == _guid; }
 
-    void drawBuffer( int which );
-    void drawToAllBuffers();
+    void drawBuffer( int which ) const;
+    void drawToAllBuffers() const;
 
     int  id() const { return _fbo; }
     int  depthBufferId() const { return _depth_attachment; }

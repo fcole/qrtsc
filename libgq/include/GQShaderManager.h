@@ -38,7 +38,7 @@ class GQShaderManager;
 // This is a class to keep track of the currently bound shader program. 
 // If the ref is destroyed (i.e. passes out of scope) it decrements the 
 // shader manager's ref count. If the ref count reaches zero, the program
-// is unbound. The program can also be directly unbound by calling unbind()
+// is unbound. The program can also be directly unbound by calling unbind().
 
 class GQShaderRef
 {
@@ -48,8 +48,9 @@ class GQShaderRef
         ~GQShaderRef();
         const GQShaderRef& operator=(const GQShaderRef& input);
 
-        const QString& getName() const { return _name; }
-
+        const QString& name() const { return _name; }
+		bool isValid() const;
+	
 		int  uniformLocation( const QString& name ) const;
         int  uniformLocationExistsCheck( const QString& name ) const;
         bool setUniform1f( const QString& name, float value ) const;
@@ -62,7 +63,12 @@ class GQShaderRef
                            float c, float d ) const;
         bool setUniform4fv( const QString& name, const float* value ) const;
         bool setUniformMatrix4fv( const QString& name, const float* value ) const;
-
+        //bool setUniformXform( const QString& name, const xform& xf ) const;
+        bool setUniformMatrixUpper3x3( const QString& name, const xform& xf ) const;
+	
+		bool setUniformVec3Array( const QString& name, const QVector<vec>& v, int count = -1 ) const;
+		bool setUniformVec2Array( const QString& name, const QVector<vec2>& v, int count = -1 ) const;
+	
 		int  attribLocation( const QString& name ) const;
 
         bool bindNamedTexture( const QString& name, const GQTexture* tex ) const;
@@ -70,7 +76,7 @@ class GQShaderRef
         void unbind();
 
     private:
-        // only the shader manager can create valid references
+        // Only the shader manager can create valid references.
         GQShaderRef( const QString& name, int guid );
 
     private:
@@ -103,7 +109,7 @@ class GQShaderManager
         static bool bindNamedTexture(int program_bind_guid, const QString& name, 
                                      const GQTexture* tex );
         
-        static int  getCurrentProgramRefGuid() { return _current_program_ref_guid; }
+        static int  currentProgramRefGuid() { return _current_program_ref_guid; }
         static void incRef( int program_bind_guid );
         static void decRef( int program_bind_guid );
 
