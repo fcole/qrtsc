@@ -16,6 +16,10 @@ See the COPYING file for details.
 #include <QFile>
 #include <QFileInfo>
 #include <QTextStream>
+#include <QStringList>
+#include <QDir>
+#include <QVector>
+ 
 
 #include "GQMatlabArray.h"
 
@@ -189,27 +193,123 @@ bool GQTexture3D::load( const QString& filename )
 {
     if (filename.endsWith(".mat"))
     {
-        GQMatlabArray array;
-        bool ret = array.load(filename);
-        if (ret)
-        {
-            if (array.glType() == GL_DOUBLE)
-                array.convertToFloat();
+        return loadMat(filename);
+    }
+    else if (filename.endsWith(".3dt"))
+    {
+        return load3dt(filename);
+    }
+    else 
+    {
+        GQImage image;
+        if (image.load(filename))
+            return create(image);
+    }
+    return false;
+}
 
-            array.normalize();
-
-            GLenum format = GL_LUMINANCE;
-            GLenum internal_format = GL_LUMINANCE;
-            if (array.glType() == GL_FLOAT)
-                internal_format = GL_LUMINANCE32F_ARB;
-
-            return create(array.width(), array.height(), array.depth(),
-                            internal_format, format, 
-                            array.glType(), array.data());
-        }
+bool GQTexture3D::loadMat( const QString& filename )
+{
+    GQMatlabArray array;
+    if (!array.load(filename)) {
+        qWarning("Could not open: %s", qPrintable(filename));
+        return false;
     }
 
-    return false;
+    if (array.glType() == GL_DOUBLE)
+        array.convertToFloat();
+
+    array.normalize();
+
+    GLenum format = GL_LUMINANCE;
+    GLenum internal_format = GL_LUMINANCE;
+    if (array.glType() == GL_FLOAT)
+        internal_format = GL_LUMINANCE32F_ARB;
+
+    return create(array.width(), array.height(), array.depth(),
+                    internal_format, format, 
+                    array.glType(), array.data());
+}
+
+bool GQTexture3D::load3dt( const QString& filename )
+{
+    QFile header_file(filename);
+    if (!header_file.open(QFile::ReadOnly)) {
+        qWarning("Could not open: %s", qPrintable(filename));
+        return false;
+    }
+
+    QTextStream header(&header_file);
+    int depth;
+    QStringList slice_names;
+    header >> depth;
+    QDir dir = QFileInfo(filename).dir();
+    for (int i = 0; i < depth; i++)
+    {
+        QString slice;
+        header >> slice;
+        slice_names << dir.absoluteFilePath(slice);
+    }
+
+    int width, height, channels;
+    QVector<uint8> data;
+    GQImage first;
+    if (!first.load(slice_names[0])) {
+        qWarning("Could not open: %s", qPrintable(slice_names[0]));
+        return false;
+    }
+
+    width = first.width();
+    height = first.height();
+    channels = first.chan();
+    data.reserve(width*height*depth*channels);
+
+    for (int i = 0; i < width*height*channels; i++)
+        data.push_back(first.raster()[i]);
+
+    for (int j = 1; j < depth; j++) {
+        GQImage img;
+        if (!img.load(slice_names[j])) {
+            qWarning("Could not open: %s", qPrintable(slice_names[j]));
+            return false;
+        }
+        for (int i = 0; i < width*height*channels; i++)
+            data.push_back(img.raster()[i]);
+    }
+
+    GLint format;
+    if (channels == 1) 
+        format = GL_LUMINANCE;
+    else if (channels == 2)
+        format = GL_LUMINANCE_ALPHA;
+    else if (channels == 3) 
+        format = GL_RGB;
+    else if (channels == 4)
+        format = GL_RGBA;
+    else
+        assert(0);
+
+    return create(width, height, depth,
+                  format, format, 
+                  GL_UNSIGNED_BYTE, data.constData());
+}
+
+bool GQTexture3D::create(const GQImage& image)
+{
+    GLint format;
+    if (image.chan() == 1) 
+        format = GL_LUMINANCE;
+    else if (image.chan() == 2)
+        format = GL_LUMINANCE_ALPHA;
+    else if (image.chan() == 3) 
+        format = GL_RGB;
+    else if (image.chan() == 4)
+        format = GL_RGBA;
+    else
+        assert(0);
+ 
+    return create(image.width(), image.height(), 1,
+                 format, format, GL_UNSIGNED_BYTE, image.raster());
 }
 
 bool GQTexture3D::create(int width, int height, int depth, 
@@ -239,7 +339,7 @@ bool GQTexture3D::genTexture(int internal_format, int format,
     
     glTexParameteri(target, GL_TEXTURE_WRAP_S, wrap_mode);
     glTexParameteri(target, GL_TEXTURE_WRAP_T, wrap_mode);
-    glTexParameteri(target, GL_TEXTURE_WRAP_R, wrap_mode);
+    glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter_mag_mode);
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filter_min_mode);
 	

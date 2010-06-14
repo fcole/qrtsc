@@ -1,7 +1,7 @@
 
 /******************************************************************************\
  *                                                                            *
- *  filename : GQImage.h                                                     *
+ *  filename : GQImage.h                                                      *
  *  author   : R. Keith Morley                                                *
  *           : Adam Finkelstein                                               *
  *           : Forrester Cole                                                 *
@@ -27,7 +27,8 @@ public:
     int chan()const   { return _num_chan; }
     unsigned char* raster() { return _raster; } 
     const unsigned char* raster() const { return _raster; } 
-	unsigned char pixel( int x, int y, int c ) const { return _raster[_num_chan * (x + y*_width) + c]; }
+	unsigned char pixel( int x, int y, int c ) const 
+        { return _raster[_num_chan * (x + y*_width) + c]; }
 	
 	void setPixelChannel( int x, int y, int c, unsigned char value );
    
@@ -50,8 +51,8 @@ private:
     unsigned char* _raster;
 };
 
-// This really should be a templated version of above, but QImage doesn't work for
-// floating point image I/O.
+// This really should be a templated version of above, but QImage 
+// doesn't work for floating point image I/O.
 class GQFloatImage
 {
 public:
@@ -64,7 +65,8 @@ public:
     int chan()const   { return _num_chan; }
     float* raster() { return _raster; } 
     const float* raster() const { return _raster; } 
-	float  pixel( int x, int y, int c ) const { return _raster[_num_chan * (x + y*_width) + c]; }
+	float  pixel( int x, int y, int c ) const 
+        { return _raster[_num_chan * (x + y*_width) + c]; }
    
 	void setPixel( int x, int y, const float* pixel );
 	void setPixelChannel( int x, int y, int c, float value );
@@ -93,7 +95,7 @@ private:
     int _width;
     int _height;
     int _num_chan;
-    float*       _raster;
+    float* _raster;
 };
 
 

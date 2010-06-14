@@ -69,6 +69,8 @@ bool GQFramebufferObject::init(int width, int height,
     int gl_format = GL_RGBA32F_ARB;
     if (format == GQ_FORMAT_RGBA_BYTE)
         gl_format = GL_RGBA;
+    else if (format == GQ_FORMAT_RGBA_HALF)
+        gl_format = GL_RGBA16F_ARB;
 
     int gl_target = GL_TEXTURE_RECTANGLE_ARB;
     if (coordinates == GQ_COORDS_NORMALIZED)

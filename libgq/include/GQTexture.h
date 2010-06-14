@@ -78,6 +78,7 @@ class GQTexture3D : public GQTexture
 {
     public:
         bool load( const QString& filename );
+        bool create(const GQImage& image);
         bool create(int width, int height, int depth, int internal_format, 
                     int format, int type, const void *data);
         bool bind() const;
@@ -95,6 +96,8 @@ class GQTexture3D : public GQTexture
         int target() const { return GL_TEXTURE_3D; }
 
     protected:
+        bool loadMat( const QString& filename );
+        bool load3dt( const QString& filename );
         bool genTexture(int internal_format, int format, int type, 
 						const void *data);
     

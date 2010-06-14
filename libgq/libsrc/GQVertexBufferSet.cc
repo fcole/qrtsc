@@ -239,6 +239,7 @@ void GQVertexBufferSet::setUsageMode(GQVertexBufferUsage usage_mode)
         case GQ_STATIC_DRAW: _gl_usage_mode = GL_STATIC_DRAW; break;
         case GQ_DYNAMIC_DRAW: _gl_usage_mode = GL_DYNAMIC_DRAW; break;
         case GQ_STREAM_DRAW: _gl_usage_mode = GL_STREAM_DRAW; break;
+        case GQ_STREAM_COPY: _gl_usage_mode = GL_STREAM_COPY; break;
         default: assert(0); break;
     }
     for (int i = 0; i < _buffers.size(); i++)

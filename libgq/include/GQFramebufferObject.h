@@ -26,6 +26,7 @@ const uint32 GQ_COORDS_NORMALIZED = 0x1;
 
 const uint32 GQ_FORMAT_RGBA_FLOAT = 0x0;
 const uint32 GQ_FORMAT_RGBA_BYTE = 0x1;
+const uint32 GQ_FORMAT_RGBA_HALF = 0x2;
 
 const uint32 GQ_KEEP_BUFFER = 0x0;
 const uint32 GQ_CLEAR_BUFFER = 0x1;

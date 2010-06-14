@@ -1,12 +1,11 @@
+#include <QImage>
+#include <QColor>
+#include <QtGui>
 
 #include <GQImage.h>
 #include <GQInclude.h>
 #include <string.h>
 #include <stdio.h>
-
-#include <QImage>
-#include <QColor>
-#include <QtGui>
 
 inline float clamp( float f, float min, float max )
 {

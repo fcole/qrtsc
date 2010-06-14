@@ -41,6 +41,7 @@ enum GQVertexBufferUsage
     GQ_STATIC_DRAW, 
     GQ_DYNAMIC_DRAW, 
     GQ_STREAM_DRAW, 
+    GQ_STREAM_COPY, 
     GQ_NUM_VERTEX_BUFFER_USAGE 
 };
 

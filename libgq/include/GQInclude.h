@@ -20,8 +20,21 @@ See the COPYING file for details.
 #    include <glu.h>
 #endif
 #ifdef LINUX
+#    include <QVariant>
+#    include <QTextStream>
+#    include <QDir>
+#    include <QEvent>
+#    include <QComboBox>
+#    include <QMessageBox>
 #    include <GLee.h>
 #    include <GL/glu.h>
+#    include <QtGlobal>
+#    include <QDir>
+#    include <QVariant>
+#    include <QTextStream>
+#    include <QMessageBox>
+#    include <QEvent>
+#    include <QComboBox>
 #endif
 #ifdef WIN32
 #    define NOMINMAX
@@ -30,6 +43,8 @@ See the COPYING file for details.
 #    include <GL/glu.h>
 #endif
 
+#include <QtGlobal>
+
 //#define GQ_DEBUGGING_LEVEL_REALLY_VERBOSE
 //#define GQ_DEBUGGING_LEVEL_VERBOSE
 #define GQ_DEBUGGING_LEVEL_QUIET
@@ -37,7 +52,6 @@ See the COPYING file for details.
 
 #include <Vec.h>
 #include <XForm.h>
-#include <QtGlobal>
 
 typedef int             int32;
 typedef char            int8;
