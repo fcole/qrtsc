@@ -116,7 +116,7 @@ protected:
     int _num_color_attachments;
     GQTexture2D** _color_attachments;
 
-    int	_depth_attachment;
+    int _depth_attachment;
 
 
 };

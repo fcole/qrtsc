@@ -38,7 +38,7 @@ void GQFramebufferObject::clear()
         }
 
         delete _color_attachments;
-		
+        
         if (_depth_attachment >= 0)
         {
             glDeleteRenderbuffersEXT(1, (GLuint*)(&_depth_attachment));
@@ -149,7 +149,7 @@ bool GQFramebufferObject::initGL(int target, int format,
                     _color_attachments[i]->id(), 0);
         }
         glBindTexture( _gl_target, 0 );
-		
+        
         if ( _attachments & GQ_ATTACH_DEPTH)
         {
             // attach a depth buffer
@@ -191,13 +191,13 @@ void GQFramebufferObject::bind(uint32 clear_behavior) const
     assert(_bound_guid == 0);
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbo);
     glPushAttrib(GL_VIEWPORT_BIT | GL_COLOR_BUFFER_BIT);
-	
-	if (clear_behavior == GQ_CLEAR_BUFFER)
-	{
-		drawToAllBuffers();
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	}
-	
+    
+    if (clear_behavior == GQ_CLEAR_BUFFER)
+    {
+        drawToAllBuffers();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+    
     _bound_guid = _guid;
 }
 
@@ -328,7 +328,7 @@ void GQFramebufferObject::readColorTexturef( int which, GQFloatImage& image, int
     glGetTexImage( _gl_target, 0, format, GL_FLOAT, 
                    image.raster());
     _color_attachments[which]->unbind();
-}	
+}   
 
 void GQFramebufferObject::loadColorTexturei( int which, const GQImage& image )
 {
@@ -494,7 +494,7 @@ bool GQSingleFBO::init( int target, int format, uint32 attachments,
         _current_color_attachment = 0;
 
         glBindTexture( _gl_target, 0 );
-		
+        
         if ( _attachments & GQ_ATTACH_DEPTH)
         {
             // attach a depth buffer

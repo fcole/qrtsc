@@ -29,7 +29,7 @@ enum GQVertexBufferType
     GQ_NORMAL, 
     GQ_COLOR, 
     GQ_TEXCOORD,
-	GQ_INDEX,
+    GQ_INDEX,
     GQ_NUM_VERTEX_BUFFER_TYPES 
 };
 
@@ -55,29 +55,29 @@ class GQVertexBufferSet
         // Note: these calls do *not* copy the data out of the sources unless
         // copyToVBOs is called. Thus, the sources cannot be destroyed after being
         // added. (should this change?)
-		void add( GQVertexBufferType semantic, int width, int format, int length );
-		void add( GQVertexBufferType semantic, int width, const QVector<float>& data );
+        void add( GQVertexBufferType semantic, int width, int format, int length );
+        void add( GQVertexBufferType semantic, int width, const QVector<float>& data );
         void add( GQVertexBufferType semantic, int width, const QVector<int>& data );
-		void add( GQVertexBufferType semantic, int width, const QVector<uint8>& data );
-		void add( GQVertexBufferType semantic, int width, const std::vector<int>& data );
-		void add( GQVertexBufferType semantic, const QVector<vec>& data );
+        void add( GQVertexBufferType semantic, int width, const QVector<uint8>& data );
+        void add( GQVertexBufferType semantic, int width, const std::vector<int>& data );
+        void add( GQVertexBufferType semantic, const QVector<vec>& data );
         void add( GQVertexBufferType semantic, const std::vector<vec>& data );
-		void add( GQVertexBufferType semantic, const std::vector<vec2>& data );
+        void add( GQVertexBufferType semantic, const std::vector<vec2>& data );
         void add( const QString& name, int width, int format, int length );
-		void add( const QString& name, int width, const QVector<float>& data );
-		void add( const QString& name, int width, const QVector<int>& data );
-		void add( const QString& name, int width, const QVector<uint8>& data );
-		void add( const QString& name, int width, const std::vector<int>& data );
-		void add( const QString& name, const QVector<vec>& data );
+        void add( const QString& name, int width, const QVector<float>& data );
+        void add( const QString& name, int width, const QVector<int>& data );
+        void add( const QString& name, int width, const QVector<uint8>& data );
+        void add( const QString& name, int width, const std::vector<int>& data );
+        void add( const QString& name, const QVector<vec>& data );
         void add( const QString& name, const std::vector<vec>& data );
-		void add( const QString& name, const std::vector<vec2>& data );
+        void add( const QString& name, const std::vector<vec2>& data );
 
         int  numBuffers() const { return _buffers.size(); }
-		bool hasBuffer(GQVertexBufferType semantic) const 
-			{ return _buffer_hash.contains(GQVertexBufferNames[semantic]); }
-		bool hasBuffer(const QString& name) const 
-			{ return _buffer_hash.contains(name); };
-	
+        bool hasBuffer(GQVertexBufferType semantic) const 
+            { return _buffer_hash.contains(GQVertexBufferNames[semantic]); }
+        bool hasBuffer(const QString& name) const 
+            { return _buffer_hash.contains(name); };
+    
         void setStartingElement( int element ) { _starting_element = element; }
         void setElementStride( int stride ) { _element_stride = stride; }
         void setUsageMode(GQVertexBufferUsage usage_mode);
@@ -94,16 +94,16 @@ class GQVertexBufferSet
         bool vbosLoaded() const;
 
         void copyFromFBO(const QString& vbo_name,
-						 const GQFramebufferObject& fbo, int fbo_buffer);
+                         const GQFramebufferObject& fbo, int fbo_buffer);
         void copyFromFBO(GQVertexBufferType vbo_semantic, 
-						 const GQFramebufferObject& fbo, int fbo_buffer);
+                         const GQFramebufferObject& fbo, int fbo_buffer);
         void copyFromSubFBO(const QString& vbo_name,
-							const GQFramebufferObject& fbo, int fbo_buffer, 
+                            const GQFramebufferObject& fbo, int fbo_buffer, 
                             int x, int y, int width, int height);
         void copyFromSubFBO(GQVertexBufferType vbo_semantic,
-							const GQFramebufferObject& fbo, int fbo_buffer, 
+                            const GQFramebufferObject& fbo, int fbo_buffer, 
                             int x, int y, int width, int height);
-	
+    
     protected:
         class BufferInfo {
         public:
