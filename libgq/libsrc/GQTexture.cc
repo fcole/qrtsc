@@ -339,7 +339,7 @@ bool GQTexture3D::genTexture(int internal_format, int format,
     
     glTexParameteri(target, GL_TEXTURE_WRAP_S, wrap_mode);
     glTexParameteri(target, GL_TEXTURE_WRAP_T, wrap_mode);
-    glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(target, GL_TEXTURE_WRAP_R, wrap_mode);
     glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter_mag_mode);
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filter_min_mode);
 	
