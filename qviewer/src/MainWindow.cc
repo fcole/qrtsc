@@ -19,10 +19,8 @@ See the COPYING file for details.
 #include "Scene.h"
 #include "GQShaderManager.h"
 
-#include "GQStats.h"
-
+#include "Stats.h"
 #include "DialsAndKnobs.h"
-
 #include "Console.h"
 
 #include <XForm.h>
@@ -163,8 +161,8 @@ bool MainWindow::openScene( const QString& filename )
     _scene = new_scene;
     _scene_name = QDir::fromNativeSeparators(filename);
 
-    GQStats::instance().clear();
-    _scene->recordStats(GQStats::instance());
+    Stats::instance().clear();
+    _scene->recordStats(Stats::instance());
 
     _gl_viewer->setScene(_scene);
     _dials_and_knobs->load(_scene->dialsAndKnobsState());
@@ -290,25 +288,14 @@ void MainWindow::setupFileMenu()
 
 void MainWindow::setupDockWidgets(QMenu* menu)
 {
-    _dials_and_knobs = new DialsAndKnobs(this);
+    _dials_and_knobs = new DialsAndKnobs(this, menu);
     connect(_dials_and_knobs, SIGNAL(dataChanged()),
         _gl_viewer, SLOT(updateGL()));
 
-    menu->addAction(_dials_and_knobs->toggleViewAction());
-
-    _console = new Console(this);
+    _console = new Console(this, menu);
     _console->installMsgHandler();
 
-    menu->addAction(_console->toggleViewAction());
-
-    _stats_widget = new QDockWidget(tr("Statistics"), this);
-    QTreeView* tree_view = new QTreeView;
-    tree_view->setModel(&(GQStats::instance()));
-    _stats_widget->setWidget(tree_view);
-    addDockWidget(Qt::RightDockWidgetArea, _stats_widget);
-    _stats_widget->setObjectName("stats");
-
-    menu->addAction(_stats_widget->toggleViewAction());
+    _stats_widget = new StatsWidget(this, menu);
 }
 
 void MainWindow::makeWindowTitle()

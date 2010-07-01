@@ -295,7 +295,7 @@ void Scene::setupLighting(GQShaderRef& shader)
     shader.setUniform3fv("light_dir_world", world_light);
 }
 
-void Scene::recordStats(GQStats& stats)
+void Scene::recordStats(Stats& stats)
 {
     stats.beginConstantGroup("Mesh");
     stats.setConstant("Num Vertices", _trimesh->vertices.size());

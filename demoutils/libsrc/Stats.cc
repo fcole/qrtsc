@@ -1,21 +1,24 @@
 /*****************************************************************************\
 
-GQStats.cc
+Stats.cc
 Author: Forrester Cole (fcole@cs.princeton.edu)
 Copyright (c) 2009 Forrester Cole
 
-libgq is distributed under the terms of the GNU General Public License.
+demoutils is distributed under the terms of the GNU General Public License.
 See the COPYING file for details.
 
 \*****************************************************************************/
 
-#include "GQStats.h"
+#include "Stats.h"
 #include "timestamp.h"
 #include <assert.h>
+#include <QTreeView>
+#include <QMainWindow>
+#include <QMenu>
 
-GQStats GQStats::_global_instance;
+Stats Stats::_global_instance;
 
-bool GQStats::init()
+bool Stats::init()
 {
     _dummy_root.children.clear();
 
@@ -39,7 +42,7 @@ bool GQStats::init()
     return true;
 }
 
-void GQStats::clear()
+void Stats::clear()
 {
     for (int i = 0; i < NUM_CATEGORIES; i++)
     {
@@ -55,24 +58,7 @@ void GQStats::clear()
     QAbstractItemModel::reset();
 }
 
-void GQStats::clearCategory( GQStats::Category which )
-{
-    _records[which].clear();
-    _headers[which].children.clear();
-
-    switch (which)
-    {
-        case TIMER : _timer_stack.clear(); break;
-        case CONSTANT : _constant_stack.clear(); break;
-        default : break; 
-    }
-
-    _layout_changed = false;
-    _data_changed = false;
-    QAbstractItemModel::reset();
-}
-
-void GQStats::reset()
+void Stats::reset()
 {
     //assert( _timer_stack.size() == 0 );
     _timer_stack.clear();
@@ -111,7 +97,7 @@ void GQStats::reset()
     _data_changed = true;
 }
 
-void GQStats::updateView()
+void Stats::updateView()
 {
     if (_layout_changed)
     {
@@ -121,9 +107,9 @@ void GQStats::updateView()
     }
     else if (_data_changed)
     {
-        // don't really understand how the dataChanged signal works
-        // this updates everything, but it seems like it should just 
-        // update the counters
+        // I don't really understand how the dataChanged signal works.
+        // This updates everything, but it seems like it should just 
+        // update the counters.
         QModelIndex a = createIndex(0,0,&_headers[COUNTER]);
         QModelIndex b = createIndex(numCounters()-1,1,&_headers[COUNTER]);
 
@@ -132,7 +118,7 @@ void GQStats::updateView()
     }
 }
         
-void GQStats::setChildValuesToZero( Record* record )
+void Stats::setChildValuesToZero( Record* record )
 {
     for (int i = 0; i < record->children.size(); i++)
     {
@@ -142,51 +128,51 @@ void GQStats::setChildValuesToZero( Record* record )
     }
 }
 
-int GQStats::findTimer( const QString& name, const Record* parent )
+int Stats::findTimer( const QString& name, const Record* parent )
 {
-	int index = -1;
-	for (int i = 0; i < _records[TIMER].size(); i++)
-	{
+    int index = -1;
+    for (int i = 0; i < _records[TIMER].size(); i++)
+    {
         Record& timer = _records[TIMER][i];
-		if (timer.name == name &&
+        if (timer.name == name &&
             (parent == 0 || timer.parent == parent))
-		{
-			index = i;
-			break;
-		}
-	}
-	return index;
+        {
+            index = i;
+            break;
+        }
+    }
+    return index;
 }
 
-int GQStats::findTimer( const Record* pointer )
+int Stats::findTimer( const Record* pointer )
 {
-	int index = -1;
-	for (int i = 0; i < _records[TIMER].size(); i++)
-	{
-		if (&(_records[TIMER][i]) == pointer)
-		{
-			index = i;
-			break;
-		}
-	}
-	return index;
+    int index = -1;
+    for (int i = 0; i < _records[TIMER].size(); i++)
+    {
+        if (&(_records[TIMER][i]) == pointer)
+        {
+            index = i;
+            break;
+        }
+    }
+    return index;
 }
 
-int GQStats::findCounter( const QString& name )
+int Stats::findCounter( const QString& name )
 {
-	int index = -1;
-	for (int i = 0; i < _records[COUNTER].size(); i++)
-	{
-		if (_records[COUNTER][i].name == name)
-		{
-			index = i;
-			break;
-		}
-	}
-	return index;
+    int index = -1;
+    for (int i = 0; i < _records[COUNTER].size(); i++)
+    {
+        if (_records[COUNTER][i].name == name)
+        {
+            index = i;
+            break;
+        }
+    }
+    return index;
 }
 
-void GQStats::removeTimer( int which )
+void Stats::removeTimer( int which )
 {
     Record* timer = &(_records[TIMER][which]);
     assert( timer->children.size() == 0 );
@@ -209,7 +195,7 @@ void GQStats::removeTimer( int which )
     _records[TIMER].removeAt(which);
 }
     
-void GQStats::removeCounter( int which )
+void Stats::removeCounter( int which )
 {
     Record* parent = &_headers[COUNTER];
     for (int i = 0; i < parent->children.size(); i++)
@@ -225,11 +211,11 @@ void GQStats::removeCounter( int which )
     _records[COUNTER].removeAt(which);
 }
 
-void GQStats::startTimer( const QString& name )
+void Stats::startTimer( const QString& name )
 {
-    int index = findTimer(name, _timer_stack.isEmpty() ? 0 : _timer_stack.last());	
+    int index = findTimer(name, _timer_stack.isEmpty() ? 0 : _timer_stack.last());  
     if (index == -1)
-	{
+    {
         index = _records[TIMER].size();
         Record newtimer;
         newtimer.name = name;
@@ -252,17 +238,17 @@ void GQStats::startTimer( const QString& name )
         }
 
         _layout_changed = true;
-	}
-	else
-	{
-		_records[TIMER][index].stamp = now();
-	}
+    }
+    else
+    {
+        _records[TIMER][index].stamp = now();
+    }
 
     _records[TIMER][index].touches_since_last_reset++;
     _timer_stack.append(&(_records[TIMER][index]));
 }
 
-void GQStats::stopTimer( const QString& name )
+void Stats::stopTimer( const QString& name )
 {
 #ifdef QT_NO_DEBUG
     Q_UNUSED(name);
@@ -276,11 +262,11 @@ void GQStats::stopTimer( const QString& name )
     _timer_stack.removeLast();
 }
 
-void GQStats::setCounter( const QString& name, float value )
+void Stats::setCounter( const QString& name, float value )
 {
-	int index = findCounter(name);	
-	if (index == -1)
-	{
+    int index = findCounter(name);  
+    if (index == -1)
+    {
         index = _records[COUNTER].size();
         Record newcounter;
         newcounter.name = name;
@@ -292,20 +278,20 @@ void GQStats::setCounter( const QString& name, float value )
         _headers[COUNTER].children.append(&(_records[COUNTER][index]));
 
         _layout_changed = true;
-	}
-	else
-	{
-		_records[COUNTER][index].value = value;
+    }
+    else
+    {
+        _records[COUNTER][index].value = value;
         _data_changed = true;
-	}
+    }
     _records[COUNTER][index].touches_since_last_reset++;
 }
 
-void GQStats::addToCounter( const QString& name, float value )
+void Stats::addToCounter( const QString& name, float value )
 {
-	int index = findCounter(name);	
-	if (index == -1)
-	{
+    int index = findCounter(name);  
+    if (index == -1)
+    {
         index = _records[COUNTER].size();
         Record newcounter;
         newcounter.name = name;
@@ -317,16 +303,16 @@ void GQStats::addToCounter( const QString& name, float value )
         _headers[COUNTER].children.append(&(_records[COUNTER][index]));
 
         _layout_changed = true;
-	}
-	else
-	{
-		_records[COUNTER][index].value += value;
+    }
+    else
+    {
+        _records[COUNTER][index].value += value;
         _data_changed = true;
-	}
+    }
     _records[COUNTER][index].touches_since_last_reset++;
 }
 
-void GQStats::beginConstantGroup( const QString& name )
+void Stats::beginConstantGroup( const QString& name )
 {
     Record newgroup;
     newgroup.name = name;
@@ -348,12 +334,12 @@ void GQStats::beginConstantGroup( const QString& name )
 
     _layout_changed = true;
 }
-void GQStats::setConstant( const QString& name, float value )
+void Stats::setConstant( const QString& name, float value )
 {
     setConstant(name, QString::number(value));
 }
 
-void GQStats::setConstant( const QString& name, const QString& value )
+void Stats::setConstant( const QString& name, const QString& value )
 {
     Record* parent = &_headers[CONSTANT];
     if (_constant_stack.size() > 0)
@@ -395,14 +381,14 @@ void GQStats::setConstant( const QString& name, const QString& value )
     _data_changed = true;
 }
 
-void GQStats::endConstantGroup()
+void Stats::endConstantGroup()
 {
     assert( _constant_stack.size() > 0 );
     _constant_stack.removeLast();
 }
 
 
-QString GQStats::timerStatistics( const QString& name )
+QString Stats::timerStatistics( const QString& name )
 {
     int timer_index = findTimer(name, 0);
     if (timer_index < 0)
@@ -424,7 +410,7 @@ QString GQStats::timerStatistics( const QString& name )
 
 // QAbstractItemModel implementation
 
-QVariant GQStats::data( const QModelIndex& index, int role ) const
+QVariant Stats::data( const QModelIndex& index, int role ) const
 {
     if (!index.isValid())
         return QVariant();
@@ -460,14 +446,14 @@ QVariant GQStats::data( const QModelIndex& index, int role ) const
     return ret;
 }
 
-Qt::ItemFlags GQStats::flags( const QModelIndex& index ) const
+Qt::ItemFlags Stats::flags( const QModelIndex& index ) const
 {
     Q_UNUSED(index);
     
     return Qt::ItemIsEnabled;
 }
 
-QVariant GQStats::headerData( int section, Qt::Orientation orientation, int role ) const
+QVariant Stats::headerData( int section, Qt::Orientation orientation, int role ) const
 {
      if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
      {
@@ -480,7 +466,7 @@ QVariant GQStats::headerData( int section, Qt::Orientation orientation, int role
      return QVariant();
  }
 
-QModelIndex GQStats::index( int row, int column, const QModelIndex& parent ) const
+QModelIndex Stats::index( int row, int column, const QModelIndex& parent ) const
 {
     const Record* parent_record = 0;
 
@@ -498,7 +484,7 @@ QModelIndex GQStats::index( int row, int column, const QModelIndex& parent ) con
     return QModelIndex();
 }
 
-QModelIndex GQStats::parent(const QModelIndex &index) const
+QModelIndex Stats::parent(const QModelIndex &index) const
 {
     if (!index.isValid())
         return QModelIndex();
@@ -526,7 +512,7 @@ QModelIndex GQStats::parent(const QModelIndex &index) const
     return createIndex(row, 0, parent_record);
 }
  
-int GQStats::rowCount( const QModelIndex& parent ) const
+int Stats::rowCount( const QModelIndex& parent ) const
 {
     int count = 0; 
     const Record* parent_rec;
@@ -539,9 +525,24 @@ int GQStats::rowCount( const QModelIndex& parent ) const
     return count;
 }
 
-int GQStats::columnCount( const QModelIndex& parent ) const
+int Stats::columnCount( const QModelIndex& parent ) const
 {
     (void)parent;
     
     return 2;
+}
+
+StatsWidget::StatsWidget(QMainWindow* parent, QMenu* window_menu) : 
+    QDockWidget(tr("Statistics"), parent)
+{
+    QTreeView* tree_view = new QTreeView;
+    tree_view->setModel(&(Stats::instance()));
+    setWidget(tree_view);
+
+    parent->addDockWidget(Qt::RightDockWidgetArea, this);
+    setObjectName("stats");
+
+    if (window_menu) {
+        window_menu->addAction(this->toggleViewAction());
+    }
 }

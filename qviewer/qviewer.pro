@@ -44,6 +44,11 @@ DEPENDPATH += ../libgq/include
 INCLUDEPATH += ../libgq/include
 LIBS += -L../libgq/$${DBGNAME} -lgq
 
+PRE_TARGETDEPS += ../demoutils/$${DBGNAME}/libdemoutils.a
+DEPENDPATH += ../demoutils/include
+INCLUDEPATH += ../demoutils/include
+LIBS += -L../demoutils/$${DBGNAME} -ldemoutils
+
 PRE_TARGETDEPS += ../trimesh2/lib.$${UNAME}/libtrimesh.a
 DEPENDPATH += ../trimesh2/include
 INCLUDEPATH += ../trimesh2/include

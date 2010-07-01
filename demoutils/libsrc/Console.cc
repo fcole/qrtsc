@@ -1,6 +1,7 @@
 #include "Console.h"
 #include <QMessageBox>
 #include <QMainWindow>
+#include <QMenu>
 #include <assert.h>
 
 #ifdef WIN32
@@ -10,7 +11,8 @@
 
 Console* Console::_current_msg_console = 0;
 
-Console::Console(QMainWindow* parent) : QDockWidget(tr("Console"), parent)
+Console::Console(QMainWindow* parent, QMenu* window_menu) : 
+    QDockWidget(tr("Console"), parent)
 {
     setWidget(&_edit_widget);
     parent->addDockWidget(Qt::RightDockWidgetArea, this);
@@ -20,6 +22,10 @@ Console::Console(QMainWindow* parent) : QDockWidget(tr("Console"), parent)
         SLOT(getProcessStdout()) );
     _process.setReadChannelMode( QProcess::MergedChannels );
     _process.setReadChannel( QProcess::StandardOutput );
+
+    if (window_menu) {
+        window_menu->addAction(this->toggleViewAction());
+    }
 }
 
 void Console::print( const QString& str )

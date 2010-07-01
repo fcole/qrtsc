@@ -21,7 +21,7 @@ class Console : public QDockWidget
     Q_OBJECT
 
 public:
-    Console(QMainWindow* parent);
+    Console(QMainWindow* parent, QMenu* menu);
 
     void print( const QString& str );
     void execute( const QString& cmd, const QStringList& args );

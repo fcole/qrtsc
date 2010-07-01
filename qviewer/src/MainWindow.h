@@ -23,6 +23,7 @@ class GLViewer;
 class Scene;
 class DialsAndKnobs;
 class Console;
+class StatsWidget;
 
 class MainWindow : public QMainWindow
 {
@@ -69,7 +70,7 @@ class MainWindow : public QMainWindow
     Scene*      _scene;
     Console*    _console;
     DialsAndKnobs* _dials_and_knobs;
-    QDockWidget* _stats_widget;
+    StatsWidget* _stats_widget;
     QSignalMapper _viewer_size_mapper;
 
     QString     _scene_name;

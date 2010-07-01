@@ -102,6 +102,37 @@ class dkFloat : public dkValue
     double _step_size;
 };
 
+// dkVec3
+// A 3D vector of double-precision floating point values.
+
+/*class dkVec3 : public dkValue
+{
+    Q_OBJECT
+    //Q_PROPERTY(double _value READ value WRITE setValue)
+    
+public:
+    dkVec3(const QString& name, double x, double y, double z);
+    
+    virtual bool load(QDomElement& root);
+    virtual bool save(QDomDocument& doc, QDomElement& root) const;
+    
+    QVector<double> value() const { return _value; }
+    
+    static dkVec3* find(const QString& name);
+    
+public slots:
+    void setX(double x);
+    void setY(double y);
+    void setZ(double z);    
+    
+signals:
+    void valueChanged(double f);
+    
+protected:
+    QVector<double> _value;
+};*/
+
+
 // dkInt
 // A single integer value.
 
@@ -168,6 +199,39 @@ class dkBool : public dkValue
 
   protected:
     bool _value;
+};
+
+
+// dkFilename
+// A value representing a file on disk.
+
+class dkFilename : public dkValue
+{
+    Q_OBJECT
+    Q_PROPERTY(QString _value READ value WRITE setValue)
+
+  public:
+    dkFilename(const QString& name, const QString& value = QString());
+
+    virtual bool load(QDomElement& root);
+    virtual bool save(QDomDocument& doc, QDomElement& root) const;
+
+    const QString& value() const { return _value; }
+    operator QString() const {return _value; }
+    bool operator == (const QString& b) { return value() == b; }
+    bool operator != (const QString& b) { return value() != b; }
+    QByteArray toLocal8Bit() const { return value().toLocal8Bit(); }
+
+    static dkFilename* find(const QString& name);
+
+  public slots:
+    void setValue(const QString& value);
+
+  signals:
+    void valueChanged(const QString& value);
+
+  protected:
+    QString _value;
 };
 
 // dkStringList
@@ -246,6 +310,41 @@ class dkImageBrowser : public dkValue
   friend class DialsAndKnobs;
 };
 
+// dkText
+// A length of editable text. 
+
+class dkText : public dkValue
+{
+    Q_OBJECT
+    Q_PROPERTY(QString _value READ value WRITE setValue)
+
+  public:
+    dkText(const QString& name, int lines, 
+           const QString& value = QString());
+
+    virtual bool load(QDomElement& root);
+    virtual bool save(QDomDocument& doc, QDomElement& root) const;
+
+    QString value() const { return _value; }
+    operator QString() const {return _value; }
+    bool operator == (const QString& b) { return value() == b; }
+    bool operator != (const QString& b) { return value() != b; }
+    QByteArray toLocal8Bit() const { return value().toLocal8Bit(); }
+
+    static dkText* find(const QString& name);
+
+  public slots:
+    void setValue(const QString& value);
+
+  signals:
+    void valueChanged(const QString& value);
+
+  protected:
+    QString _value;
+    int     _num_lines;
+};
+
+
 // DialsAndKnobs
 // Holds pointers to each value, but *does not* own the pointers.
 // Owns widgets for all the values.
@@ -254,18 +353,19 @@ class DialsAndKnobs : public QDockWidget
     Q_OBJECT
 
   public:
-    DialsAndKnobs(QMainWindow* parent);
+    DialsAndKnobs(QMainWindow* parent, QMenu* window_menu);
     ~DialsAndKnobs();
     virtual bool event(QEvent* e);
 
+    bool load(const QString& filename);
     bool load(const QDomElement& root);
+    bool save(const QString& filename) const;
     bool save(QDomDocument& doc, QDomElement& root) const;
     QDomElement domElement(const QString& name, QDomDocument& doc) const;
 
-    int frameCounter() const { return _frame_counter; }
-    void incrementFrameCounter() { _frame_counter++; }
-
-    static DialsAndKnobs* instance() { return _instance; }
+    static int frameCounter() { return _frame_counter; }
+    static void incrementFrameCounter() { _frame_counter++; }
+    static void notifyUpdateLayout();
 
   signals:
     void dataChanged();
@@ -278,8 +378,10 @@ class DialsAndKnobs : public QDockWidget
     void addFloatWidgets(dkFloat* dk_float);
     void addIntWidgets(dkInt* dk_int);
     void addBoolWidgets(dkBool* dk_bool);
+    void addFilenameWidgets(dkFilename* dk_filename);
     void addStringListWidgets(dkStringList* dk_string_list);
     void addImageBrowserWidgets(dkImageBrowser* dk_image_browser);
+    void addTextWidgets(dkText* dk_text);
     
     QMenu* findOrCreateMenu(const QString& group);
     QGridLayout* findOrCreateLayout(const QString& group);
@@ -291,12 +393,14 @@ class DialsAndKnobs : public QDockWidget
     QWidget _root_widget;
     QGridLayout* _root_layout;
     QMenuBar* _parent_menu_bar;
+    QMenu* _parent_window_menu;
     QHash<QString, QMenu*> _menus;
     QHash<QString, QGridLayout*> _layouts;
     bool _in_load;
-    int _frame_counter;
 
+    static int _frame_counter;
     static DialsAndKnobs* _instance;
 };
+
 
 #endif // _DIALS_AND_KNOBS_H_

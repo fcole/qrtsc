@@ -1,7 +1,6 @@
 #include "DialsAndKnobs.h"
 #include <assert.h>
 
-#include <QDoubleSpinBox>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QItemDelegate>
@@ -17,9 +16,14 @@
 #include <QVBoxLayout>
 #include <QListView>
 #include <QFileSystemModel>
+#include <QLineEdit>
+#include <QPushButton>
+
+#include <DialsAndKnobs_ui.h>
 
 const int UPDATE_LAYOUT_EVENT = QEvent::User + 1;
 
+int DialsAndKnobs::_frame_counter = 0;
 DialsAndKnobs* DialsAndKnobs::_instance = NULL;
 
 // dkValue types
@@ -51,9 +55,7 @@ QHash<QString, dkValue*>& dkValue::values_hash()
 
 bool dkValue::changedLastFrame() const
 {
-    if (DialsAndKnobs::instance() &&
-        _last_change_frame_number == 
-            DialsAndKnobs::instance()->frameCounter() - 1)
+    if (_last_change_frame_number == DialsAndKnobs::frameCounter() - 1)
         return true;
     
     return false;
@@ -72,11 +74,7 @@ void dkValue::add(dkValue* value)
     }
     values_hash()[value->_name] = value;
     values().append(value);
-    if (DialsAndKnobs::instance())
-    {
-        QCoreApplication::postEvent(DialsAndKnobs::instance(), 
-                new QEvent(QEvent::Type(UPDATE_LAYOUT_EVENT)));
-    }
+    DialsAndKnobs::notifyUpdateLayout();
 }
 
 void dkValue::remove(dkValue* value)
@@ -91,11 +89,7 @@ void dkValue::remove(dkValue* value)
             break;
         }
     }
-    if (DialsAndKnobs::instance())
-    {
-        QCoreApplication::postEvent(DialsAndKnobs::instance(), 
-                new QEvent(QEvent::Type(UPDATE_LAYOUT_EVENT)));
-    }
+    DialsAndKnobs::notifyUpdateLayout();
 }
 
 dkValue* dkValue::find(const QString& name)
@@ -147,9 +141,7 @@ void dkFloat::setValue(double f)
     if (_value != f)
     {
         _value = f;
-        if (DialsAndKnobs::instance())
-            _last_change_frame_number = 
-                DialsAndKnobs::instance()->frameCounter();
+        _last_change_frame_number = DialsAndKnobs::frameCounter();
         
         emit valueChanged(_value);
     }
@@ -206,9 +198,7 @@ void dkInt::setValue(int i)
     if (_value != i)
     {
         _value = i;
-        if (DialsAndKnobs::instance())
-            _last_change_frame_number = 
-                DialsAndKnobs::instance()->frameCounter();
+        _last_change_frame_number = DialsAndKnobs::frameCounter();
         emit valueChanged(_value);
     }
 }
@@ -250,9 +240,7 @@ void dkBool::setValue(bool b)
     if (_value != b)
     {
         _value = b;
-        if (DialsAndKnobs::instance())
-            _last_change_frame_number = 
-                DialsAndKnobs::instance()->frameCounter();
+        _last_change_frame_number = DialsAndKnobs::frameCounter();
         emit valueChanged(_value);
     }
 }
@@ -261,6 +249,47 @@ dkBool* dkBool::find(const QString& name)
 {
     return qobject_cast<dkBool*>(dkValue::find(name));
 }
+
+dkFilename::dkFilename(const QString& name, const QString& value)
+    : dkValue(name, DK_PANEL)
+{
+    _value = value;
+}
+
+bool dkFilename::load(QDomElement& element)
+{
+    if (element.tagName() != "filename")
+        return false;
+
+    QString str = element.attribute("value");
+    setValue(str);
+    return !str.isNull();
+}
+
+bool dkFilename::save(QDomDocument& doc, QDomElement& root) const
+{
+    QDomElement element = doc.createElement("filename");
+    element.setAttribute("name", _name);
+    element.setAttribute("value", _value);
+    root.appendChild(element);
+    return true;
+}
+
+void dkFilename::setValue(const QString& value)
+{
+    if (_value != value)
+    {
+        _value = value;
+        _last_change_frame_number = DialsAndKnobs::frameCounter();
+        emit valueChanged(_value);
+    }
+}
+
+dkFilename* dkFilename::find(const QString& name)
+{
+    return qobject_cast<dkFilename*>(dkValue::find(name));
+}
+
 
 dkStringList::dkStringList(const QString& name, const QStringList& choices,
                            dkLocation location)
@@ -299,9 +328,7 @@ void dkStringList::setIndex(int i)
     if (_index != i)
     {
         _index = i;
-        if (DialsAndKnobs::instance())
-            _last_change_frame_number = 
-                DialsAndKnobs::instance()->frameCounter();
+        _last_change_frame_number = DialsAndKnobs::frameCounter();
         emit indexChanged(_index);
     }
 }
@@ -345,9 +372,7 @@ QString dkImageBrowser::filename() const
 
 void dkImageBrowser::itemClicked(const QModelIndex& index)
 {
-    if (DialsAndKnobs::instance())
-        _last_change_frame_number = 
-            DialsAndKnobs::instance()->frameCounter();
+    _last_change_frame_number = DialsAndKnobs::frameCounter();
     emit selectionChanged(index);
 }
          
@@ -363,10 +388,51 @@ dkImageBrowser* dkImageBrowser::find(const QString& name)
     return qobject_cast<dkImageBrowser*>(dkValue::find(name));
 }
 
+dkText::dkText(const QString& name, int lines, const QString& value)
+    : dkValue(name, DK_PANEL)
+{
+    _value = value;
+    _num_lines = lines;
+}
+
+bool dkText::load(QDomElement& element)
+{
+    if (element.tagName() != "text")
+        return false;
+
+    QString str = element.text();
+    setValue(str);
+    return !str.isNull();
+}
+
+bool dkText::save(QDomDocument& doc, QDomElement& root) const
+{
+    QDomElement element = doc.createElement("text");
+    element.setAttribute("name", _name);
+    QDomText text = doc.createTextNode(_value);
+    element.appendChild(text);
+    root.appendChild(element);
+    return true;
+}
+
+void dkText::setValue(const QString& value)
+{
+    if (_value != value)
+    {
+        _value = value;
+        _last_change_frame_number = DialsAndKnobs::frameCounter();
+        emit valueChanged(_value);
+    }
+}
+
+dkText* dkText::find(const QString& name)
+{
+    return qobject_cast<dkText*>(dkValue::find(name));
+}
 
 
 // DialsAndKnobs
-DialsAndKnobs::DialsAndKnobs(QMainWindow* parent) 
+DialsAndKnobs::DialsAndKnobs(QMainWindow* parent, QMenu* window_menu)
     : QDockWidget(tr("Dials and Knobs"), parent)
 {
     assert(_instance == NULL);
@@ -376,8 +442,13 @@ DialsAndKnobs::DialsAndKnobs(QMainWindow* parent)
     parent->addDockWidget(Qt::RightDockWidgetArea, this);
     setObjectName("dials_and_knobs");
     _parent_menu_bar = parent->menuBar();
+    _parent_window_menu = window_menu;
     _in_load = false;
     _frame_counter = 0;
+
+    if (_parent_window_menu) {
+        _parent_window_menu->addAction(this->toggleViewAction());
+    }
 
     updateLayout();
 }
@@ -399,6 +470,31 @@ bool DialsAndKnobs::event(QEvent* e)
     {
         return QDockWidget::event(e);
     }
+}
+
+bool DialsAndKnobs::load(const QString& filename)
+{
+	QFile file(filename);
+	if (!file.open(QIODevice::ReadOnly))
+	{
+		qWarning("Could not open %s", qPrintable(filename));
+		return false;
+	}
+	
+	QDomDocument doc("dials_and_knobs");
+	QString parse_errors;
+	if (!doc.setContent(&file, &parse_errors))
+	{
+		qWarning("Parse errors: %s", qPrintable(parse_errors));
+		return false;
+	}
+	
+	file.close();
+	
+	QDomElement root = doc.documentElement();
+	QDir path = QFileInfo(filename).absoluteDir();
+	
+	return load(root); 
 }
 
 bool DialsAndKnobs::load(const QDomElement& root)
@@ -436,7 +532,31 @@ bool DialsAndKnobs::load(const QDomElement& root)
                 num_values_read, dkValue::numValues());
     }
     _in_load = false;
+	incrementFrameCounter();
     return ret;
+}
+
+bool DialsAndKnobs::save(const QString& filename) const
+{
+	QDomDocument doc("dials_and_knobs");
+	
+	QDomElement blank;
+	bool ret = save(doc, blank);
+    if (!ret)
+        return false;
+	
+    QFile file(filename);
+    if (!file.open(QIODevice::WriteOnly))
+    {
+        qWarning("Scene::save - Could not save %s", qPrintable(filename));
+        return false;
+    }
+	
+    file.write(doc.toByteArray());
+	
+    file.close();
+	
+    return true;
 }
 
 bool DialsAndKnobs::save(QDomDocument& doc, QDomElement& root) const
@@ -444,7 +564,11 @@ bool DialsAndKnobs::save(QDomDocument& doc, QDomElement& root) const
     QDomElement e = domElement("dials_and_knobs", doc);
     if (!e.isNull())
     {
-        root.appendChild(e);
+		if (!root.isNull()) {
+			root.appendChild(e);
+		} else {
+			doc.appendChild(e);
+		}
         return true;
     }
     return false;
@@ -461,25 +585,6 @@ QDomElement DialsAndKnobs::domElement(const QString& name,
     return element;
 }
 
-class ArbitraryPrecisionSpinBox : public QDoubleSpinBox
-{
-  public:
-    ArbitraryPrecisionSpinBox(QWidget* parent = 0) : 
-        QDoubleSpinBox(parent)
-    {
-        setDecimals(15);
-        setKeyboardTracking(false);
-    }
-
-    virtual QString textFromValue( double value ) const
-    {
-        QString str = QDoubleSpinBox::textFromValue(value);
-        int last_non_zero = str.lastIndexOf(QRegExp("[^0]"));
-        if (str[last_non_zero] == QWidget::locale().decimalPoint())
-            last_non_zero--;
-        return str.left(last_non_zero+1);
-    }
-};
 
 void DialsAndKnobs::addFloatWidgets(dkFloat* dk_float)
 {
@@ -566,6 +671,40 @@ void DialsAndKnobs::addBoolWidgets(dkBool* dk_bool)
     }
 }
 
+	
+
+void DialsAndKnobs::addFilenameWidgets(dkFilename* dk_filename)
+{
+    QString base = splitBase(dk_filename->name());
+    QString group = splitGroup(dk_filename->name());
+
+    QGridLayout* layout = findOrCreateLayout(group);
+    int row = layout->rowCount();
+
+    layout->addWidget(new QLabel(base), row, 0);
+    QWidget* container = new QWidget;
+    QHBoxLayout* line_layout = new QHBoxLayout;
+
+    FileNameLineEdit* filename_box = new FileNameLineEdit(dk_filename->name());
+    QPushButton* browse_btn = new QPushButton("...");
+    line_layout->addWidget(filename_box);
+    line_layout->addWidget(browse_btn);
+    container->setLayout(line_layout);
+
+    layout->addWidget(container, row, 1);
+	
+	connect(browse_btn, SIGNAL(clicked()), 
+            filename_box, SLOT(setFromBrowser()));
+	connect(filename_box, SIGNAL(editingFinished()), 
+            filename_box, SLOT(callUpdateFilename()));
+	connect(filename_box, SIGNAL(updateFilename(const QString&)), 
+            dk_filename, SLOT(setValue(const QString&)));
+	connect(dk_filename, SIGNAL(valueChanged(const QString&)), 
+            filename_box, SLOT(setText(const QString&)));
+    connect(dk_filename, SIGNAL(valueChanged(const QString&)), 
+            this, SLOT(dkValueChanged()));
+}
+
 void DialsAndKnobs::addStringListWidgets(dkStringList* dk_string_list)
 {
     QString base = splitBase(dk_string_list->name());
@@ -647,10 +786,43 @@ void DialsAndKnobs::addImageBrowserWidgets(dkImageBrowser* dk_image_browser)
         this, SLOT(dkValueChanged()));
 }
 
+void DialsAndKnobs::addTextWidgets(dkText* dk_text)
+{
+    QString base = splitBase(dk_text->name());
+    QString group = splitGroup(dk_text->name());
+
+    QGridLayout* layout = findOrCreateLayout(group);
+    int row = layout->rowCount();
+
+    layout->addWidget(new QLabel(base), row, 0);
+    UpdatingTextEdit* editor = new UpdatingTextEdit;
+
+    layout->addWidget(editor, row, 1);
+
+	connect(editor, SIGNAL(textChanged()), 
+            editor, SLOT(callSendText()));
+	connect(editor, SIGNAL(sendText(const QString&)), 
+            dk_text, SLOT(setValue(const QString&)));
+	connect(dk_text, SIGNAL(valueChanged(const QString&)), 
+            editor, SLOT(updateText(const QString&)));
+    connect(dk_text, SIGNAL(valueChanged(const QString&)), 
+            this, SLOT(dkValueChanged()));
+}
+
+
 bool valueSortedBefore(const dkValue* a, const dkValue* b)
 {
     return a->name().toLower() < b->name().toLower();
 } 
+
+void DialsAndKnobs::notifyUpdateLayout()
+{
+    if (_instance)
+    {
+        QCoreApplication::postEvent(_instance, 
+                new QEvent(QEvent::Type(UPDATE_LAYOUT_EVENT)));
+    }
+}
 
 void DialsAndKnobs::updateLayout()
 {
@@ -681,6 +853,10 @@ void DialsAndKnobs::updateLayout()
         {
             addBoolWidgets(qobject_cast<dkBool*>(values[i])); 
         }
+		else if (qobject_cast<dkFilename*>(values[i])) 
+        {
+            addFilenameWidgets(qobject_cast<dkFilename*>(values[i])); 
+        }
         else if (qobject_cast<dkStringList*>(values[i])) 
         {
             addStringListWidgets(qobject_cast<dkStringList*>(values[i])); 
@@ -688,6 +864,10 @@ void DialsAndKnobs::updateLayout()
         else if (qobject_cast<dkImageBrowser*>(values[i])) 
         {
             addImageBrowserWidgets(qobject_cast<dkImageBrowser*>(values[i])); 
+        }
+        else if (qobject_cast<dkText*>(values[i])) 
+        {
+            addTextWidgets(qobject_cast<dkText*>(values[i])); 
         }
         else
         {
@@ -712,7 +892,10 @@ QMenu* DialsAndKnobs::findOrCreateMenu(const QString& group)
         QString parent = splitGroup(group);
         if (parent.isEmpty())
         {
-            out_menu = _parent_menu_bar->addMenu(group);
+            if (_parent_menu_bar) 
+                out_menu = _parent_menu_bar->addMenu(group);
+            else 
+                out_menu = NULL;
         }
         else
         {

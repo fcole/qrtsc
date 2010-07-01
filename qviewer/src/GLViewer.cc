@@ -19,6 +19,7 @@ See the COPYING file for details.
 #include <QDebug>
 #include "Scene.h"
 #include "DialsAndKnobs.h"
+#include "Stats.h"
 
 GLViewer::GLViewer(QWidget* parent) : QGLViewer( parent )
 { 
@@ -101,12 +102,12 @@ void GLViewer::draw()
     
     in_draw_function = true;
 
-    GQStats& perf = GQStats::instance();
+    Stats& perf = Stats::instance();
     if (_display_timers)
     {
         perf.reset();
     }
-    DialsAndKnobs::instance()->incrementFrameCounter();
+    DialsAndKnobs::incrementFrameCounter();
 
     xform cam_xf = xform(camera()->frame()->matrix());
     _scene->setCameraTransform(cam_xf);

@@ -6,7 +6,7 @@
 
 #include "GQVertexBufferSet.h"
 #include "GQShaderManager.h"
-#include "GQStats.h"
+#include "Stats.h"
 #include "XForm.h"
 
 class GLViewer;
@@ -28,7 +28,7 @@ public:
                const DialsAndKnobs* dials_and_knobs );
     bool save( QDomDocument& doc, QDomElement& root, const QDir& path );
 
-    void recordStats(GQStats& stats);
+    void recordStats(Stats& stats);
 
     void drawScene(); 
 
