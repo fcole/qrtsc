@@ -29,6 +29,7 @@ else {
         }
         LIBS += -framework CoreFoundation
         QMAKE_CXXFLAGS += -fopenmp
+        QMAKE_LFLAGS += -fopenmp
     }
     else {
         DEFINES += LINUX
@@ -49,10 +50,10 @@ DEPENDPATH += ../demoutils/include
 INCLUDEPATH += ../demoutils/include
 LIBS += -L../demoutils/$${DBGNAME} -ldemoutils
 
-PRE_TARGETDEPS += ../trimesh2/lib.$${UNAME}/libtrimesh.a
+PRE_TARGETDEPS += ../trimesh2/$${DBGNAME}/libtrimesh.a
 DEPENDPATH += ../trimesh2/include
 INCLUDEPATH += ../trimesh2/include
-LIBS += -L../trimesh2/lib.$${UNAME} -l$${TRIMESH}
+LIBS += -L../trimesh2/$${DBGNAME} -l$${TRIMESH}
 
 PRE_TARGETDEPS += ../qglviewer/$${DBGNAME}/libqglviewer.a
 DEPENDPATH += ../qglviewer
