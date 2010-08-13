@@ -18,6 +18,8 @@ CONFIG(debug, debug|release) {
     CONFIG -= app_bundle
 }
 LIBS += -framework CoreFoundation
+QMAKE_CXXFLAGS += -fopenmp
+QMAKE_LFLAGS += -fopenmp
 
 QT += opengl xml
 
@@ -44,23 +46,25 @@ win32 {
 INCLUDEPATH += libgq/matio
 SOURCES += libgq/matio/*.c
 
+# demoutils
+HEADERS += demoutils/include/*.h
+SOURCES += demoutils/libsrc/*.cc
+
 # qviewer
 HEADERS += qviewer/src/*.h
 SOURCES += qviewer/src/*.cc
 
-# qviewer
+# trimesh2
 HEADERS += trimesh2/include/*.h
 SOURCES += trimesh2/libsrc/*.cc
 
-# Trimesh2
-#PRE_TARGETDEPS += trimesh2/lib.Darwin/libtrimesh.a
-#DEPENDPATH += trimesh2/include
-#LIBS += -Ltrimesh2/lib.Darwin -ltrimesh
-
-# qglviewer
+# libqglviewer has to be compiled separately because of
+# conflicts with the Vec type.
 PRE_TARGETDEPS += qglviewer/$${DBGNAME}/libqglviewer.a
 DEPENDPATH += qglviewer
 INCLUDEPATH += qglviewer 
 LIBS += -Lqglviewer/$${DBGNAME} -lqglviewer
 DEFINES += QGLVIEWER_STATIC
+
+
 
