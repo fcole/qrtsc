@@ -48,6 +48,7 @@ void GLViewer::resetView()
         xform cam_xf = xform(camera()->frame()->matrix());
         _scene->setCameraTransform(cam_xf);
         showEntireScene();
+        setBackgroundColor(QColor(Qt::white));
     }
 }
 

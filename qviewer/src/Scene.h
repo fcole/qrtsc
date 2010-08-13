@@ -34,29 +34,22 @@ public:
 
     void boundingSphere(vec& center, float& radius);
 
-    void setCameraTransform( const xform& xf ) { _camera_transform = xf; }
+    void setCameraTransform( const xform& xf );
 
     const TriMesh* trimesh() const { return _trimesh; }
     const QDomElement& viewerState() { return _viewer_state; }
     const QDomElement& dialsAndKnobsState() { return _dials_and_knobs_state; }
 
-    static QString fileExtension() { return QString("qvs"); }
+    static QString fileExtension() { return QString("qrt"); }
 
 protected:
     void setupMesh();
-	void setupVertexBufferSet();
-
-    void setupLighting(GQShaderRef& shader);
-    void drawMesh(GQShaderRef& shader);
 
 protected:
     TriMesh*            _trimesh;
-    GQVertexBufferSet   _vertex_buffer_set;
-	QVector<int>		_tristrips;
     QString             _trimesh_filename;
 
     xform               _camera_transform;
-    vec                 _light_direction;
 
     QDomElement         _viewer_state;
     QDomElement         _dials_and_knobs_state;

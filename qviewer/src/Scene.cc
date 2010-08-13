@@ -13,6 +13,7 @@ See the COPYING file for details.
 #include "GLViewer.h"
 #include "TriMesh.h"
 #include "DialsAndKnobs.h"
+#include "Rtsc.h"
 
 #include <QFileInfo>
 #include <QStringList>
@@ -33,7 +34,6 @@ void Scene::clear()
 {
     delete _trimesh;
     _trimesh = NULL;
-    _vertex_buffer_set.clear();
     _viewer_state.clear();
     _dials_and_knobs_state.clear();
 }
@@ -186,113 +186,18 @@ void Scene::drawScene()
     if (GQShaderManager::status() != GQ_SHADERS_OK)
         return;
 
-    GQShaderRef shader = GQShaderManager::bindProgram("polygon_render");
-    setupLighting(shader);
-
-    drawMesh(shader);
+    Rtsc::redraw();
 }
 
 void Scene::setupMesh()
 {
-    _trimesh->need_bsphere();
-    _trimesh->need_normals();
-    _trimesh->need_tstrips();
-    _trimesh->need_faces();
-
+    Rtsc::initialize(_trimesh);
 }
 
-void Scene::setupVertexBufferSet()
+void Scene::setCameraTransform( const xform& xf )
 {
-	// Trimesh stores triangle strips as length followed by indices.
-	// Grab them and store the offsets and lengths.
-	_tristrips.clear();
-	const int *t = &_trimesh->tstrips[0];
-	const int *end = t + _trimesh->tstrips.size();
-	while (t < end) {
-		int striplen = *t++;
-		_tristrips.push_back(striplen);
-		t += striplen;
-	}
-	
-    _vertex_buffer_set.clear();
-    _vertex_buffer_set.add(GQ_VERTEX, _trimesh->vertices);
-    _vertex_buffer_set.add(GQ_NORMAL, _trimesh->normals);
-	_vertex_buffer_set.add(GQ_INDEX, 1, _trimesh->tstrips);
-	
-	_vertex_buffer_set.copyToVBOs();
-}	
-	
-void Scene::drawMesh(GQShaderRef& shader)
-{
-	if (_vertex_buffer_set.numBuffers() == 0)
-		setupVertexBufferSet();
-
-    assert(_trimesh->tstrips.size() > 0);
-
-    _vertex_buffer_set.bind(shader);
-
-	int offset = 1;
-	for (int i = 0; i < _tristrips.size(); i++) {
-		drawElements(_vertex_buffer_set, GL_TRIANGLE_STRIP, offset, _tristrips[i]); 
-		offset += _tristrips[i] + 1; // +1 to skip the length stored in the tristrip array.
-	}
-	
-    _vertex_buffer_set.unbind();
-}
-
-static QStringList lightPresetNames = (QStringList() << "Headlight" <<
-"North" << "North-Northeast" << "Northeast" << "East-Northeast" << 
-"East" << "East-Southeast" << "Southeast" << "South-Southeast" <<
-"South" << "South-Southwest" << "Southwest" << "West-Southwest" << 
-"West" << "West-Northwest" << "Northwest" << "North-Northwest" );
-static dkStringList light_preset("Light Direction", lightPresetNames);
-static dkFloat light_depth("Light Depth", 1.0f, 0.0f, 2.0f, 0.1f);
-
-void Scene::setupLighting(GQShaderRef& shader)
-{
-    const QString& preset = light_preset.value();
-    vec camera_light;
-
-    if (preset == "Headlight")
-        camera_light = vec(0.0f, 0.0f, 1.0f);
-    else if (preset == "North")
-        camera_light = vec(0.0f, 1.0f, light_depth);
-    else if (preset == "North-Northeast")
-        camera_light = vec(0.374f, 1.0f, light_depth);
-    else if (preset == "Northeast")
-        camera_light = vec(1.0f, 1.0f, light_depth);
-    else if (preset == "East-Northeast")
-        camera_light = vec(1.0f, 0.374f, light_depth);
-    else if (preset == "East")
-        camera_light = vec(1.0f, 0.0f, light_depth);
-    else if (preset == "East-Southeast")
-        camera_light = vec(1.0f, -0.374f, light_depth);
-    else if (preset == "Southeast")
-        camera_light = vec(1.0f, -1.0f, light_depth);
-    else if (preset == "South-Southeast")
-        camera_light = vec(0.374f, -1.0f, light_depth);
-    else if (preset == "South")
-        camera_light = vec(0.0f, -1.0f, light_depth);
-    else if (preset == "South-Southwest")
-        camera_light = vec(-0.374f, -1.0f, light_depth);
-    else if (preset == "Southwest")
-        camera_light = vec(-1.0f, -1.0f, light_depth);
-    else if (preset == "West-Southwest")
-        camera_light = vec(-1.0f, -0.374f, light_depth);
-    else if (preset == "West")
-        camera_light = vec(-1.0f, 0.0f, light_depth);
-    else if (preset == "West-Northwest")
-        camera_light = vec(-1.0f, 0.374f, light_depth);
-    else if (preset == "Northwest")
-        camera_light = vec(-1.0f, 1.0f, light_depth);
-    else if (preset == "North-Northwest")
-        camera_light = vec(-0.374f, 1.0f, light_depth);
-    
-    normalize(camera_light);
-    xform mv_xf = rot_only( _camera_transform );
-    vec world_light = mv_xf * camera_light;
-
-    shader.setUniform3fv("light_dir_world", world_light);
+    _camera_transform = xf;
+    Rtsc::setCameraTransform(inv(xf));
 }
 
 void Scene::recordStats(Stats& stats)
