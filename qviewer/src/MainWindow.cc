@@ -288,7 +288,8 @@ void MainWindow::setupFileMenu()
 
 void MainWindow::setupDockWidgets(QMenu* menu)
 {
-    _dials_and_knobs = new DialsAndKnobs(this, menu);
+    QStringList other_docks = QStringList() << "Lines";
+    _dials_and_knobs = new DialsAndKnobs(this, menu, other_docks);
     connect(_dials_and_knobs, SIGNAL(dataChanged()),
         _gl_viewer, SLOT(updateGL()));
 

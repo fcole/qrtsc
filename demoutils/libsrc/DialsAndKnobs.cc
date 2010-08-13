@@ -432,7 +432,8 @@ dkText* dkText::find(const QString& name)
 
 
 // DialsAndKnobs
-DialsAndKnobs::DialsAndKnobs(QMainWindow* parent, QMenu* window_menu)
+DialsAndKnobs::DialsAndKnobs(QMainWindow* parent, QMenu* window_menu,
+                             QStringList top_categories)
     : QDockWidget(tr("Dials and Knobs"), parent)
 {
     assert(_instance == NULL);
@@ -448,6 +449,17 @@ DialsAndKnobs::DialsAndKnobs(QMainWindow* parent, QMenu* window_menu)
 
     if (_parent_window_menu) {
         _parent_window_menu->addAction(this->toggleViewAction());
+    }
+
+    for (int i = 0; i < top_categories.size(); i++) {
+        QDockWidget* new_dock = new QDockWidget(top_categories[i], parent);
+        _dock_widgets[top_categories[i]] = new_dock;
+        new_dock->setObjectName(top_categories[i]);
+        parent->addDockWidget(Qt::RightDockWidgetArea, new_dock);
+        if (_parent_window_menu) {
+            _parent_window_menu->addAction(new_dock->toggleViewAction());
+        }
+        new_dock->setWidget(new QWidget);
     }
 
     updateLayout();
@@ -832,12 +844,29 @@ void DialsAndKnobs::updateLayout()
     if (_root_widget.layout())
     {
         delete _root_widget.layout();
+     
+        for (int i = 0; i < _dock_widgets.size(); i++) {
+            QWidget* widget = _dock_widgets.values()[i]->widget();
+            if (widget->layout())
+                delete widget->layout();
+        }
+
         _layouts.clear();
     }
 
     QVBoxLayout* vbox = new QVBoxLayout;
     _root_layout = new QGridLayout;
     vbox->insertLayout(0, _root_layout);
+
+    QHash<QString, QVBoxLayout*> dock_layouts;
+    for (int i = 0; i < _dock_widgets.size(); i++) {
+        QString name = _dock_widgets.values()[i]->windowTitle();
+        QGridLayout* new_layout = new QGridLayout;
+        QVBoxLayout* vbox = new QVBoxLayout;
+        vbox->insertLayout(0, new_layout);
+        _layouts[name] = new_layout;
+        dock_layouts[name] = vbox;
+    }
 
     for (int i = 0; i < values.size(); i++)
     {
@@ -878,6 +907,13 @@ void DialsAndKnobs::updateLayout()
     vbox->addStretch();
 
     _root_widget.setLayout(vbox);
+    for (int i = 0; i < _dock_widgets.size(); i++) {
+        QString name = _dock_widgets.values()[i]->windowTitle();
+        QWidget* widget = _dock_widgets.values()[i]->widget();
+        QVBoxLayout* layout = dock_layouts[name];
+        layout->addStretch();
+        widget->setLayout(layout);
+    }
 }
     
 QMenu* DialsAndKnobs::findOrCreateMenu(const QString& group)

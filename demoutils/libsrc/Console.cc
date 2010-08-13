@@ -58,7 +58,7 @@ void Console::installMsgHandler()
 void Console::removeMsgHandler()
 {
     assert(_current_msg_console == this);
-    qInstallMsgHandler( msgHandler );
+    qInstallMsgHandler( 0 );
     _current_msg_console = 0;
 }
 
