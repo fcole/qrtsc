@@ -88,6 +88,7 @@ void MainWindow::init( const QDir& working_dir, const QString& scene_name )
     _last_scene_dir = working_dir.absolutePath();
     _last_export_dir = working_dir.absolutePath();
     _last_camera_dir = working_dir.absolutePath();
+    _last_screenshot_dir = working_dir.absolutePath();
 
     resize(1000,800);
 
@@ -350,20 +351,15 @@ void MainWindow::on_actionCamera_Perspective_toggled(bool checked)
 
 void MainWindow::on_actionSave_Screenshot_triggered()
 {
-    _gl_viewer->saveSnapshot( false );
-}
-
-/*void MainWindow::on_actionSave_HDR_triggered()
-{
 	QString filename = 
-        myFileDialog( QFileDialog::AcceptSave, "Save HDR", "HDR Images (*.pfm)", _last_texture_dir);
+        myFileDialog( QFileDialog::AcceptSave, "Save Screenshot", 
+                "Images (*.jpg *.png *.pfm)", _last_screenshot_dir);
 
     if (!filename.isNull())
     {
-		_standard_renderer->saveHDRScreenshot(filename);
-	    _glViewer->updateGL();
+        _gl_viewer->saveScreenshot(filename);
 	}
-}*/
+}
 
 void MainWindow::setFoV(float degrees)
 {

@@ -85,6 +85,7 @@ class MainWindow : public QMainWindow
     QString     _last_scene_dir;
     QString     _last_export_dir;
     QString     _last_camera_dir;
+    QString     _last_screenshot_dir;
 };
 
 #endif

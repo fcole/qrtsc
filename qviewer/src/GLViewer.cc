@@ -48,7 +48,6 @@ void GLViewer::resetView()
         xform cam_xf = xform(camera()->frame()->matrix());
         _scene->setCameraTransform(cam_xf);
         showEntireScene();
-        setBackgroundColor(QColor(Qt::white));
     }
 }
 
@@ -113,7 +112,18 @@ void GLViewer::draw()
     xform cam_xf = xform(camera()->frame()->matrix());
     _scene->setCameraTransform(cam_xf);
 
+    if (_save_hdr_screen) {
+        _hdr_fbo.initFullScreen(1,GQ_ATTACH_DEPTH);
+        _hdr_fbo.bind();
+    }
+
     _scene->drawScene();
+
+    if (_save_hdr_screen) {
+        _hdr_fbo.unbind();
+        _hdr_fbo.saveColorTextureToFile(0, _hdr_screen_filename);
+        _save_hdr_screen = false;
+    }
 
     if (_display_timers)
     {
@@ -121,6 +131,17 @@ void GLViewer::draw()
     }
 
     in_draw_function = false;
+}
+
+void GLViewer::saveScreenshot(QString filename) 
+{
+    if (filename.endsWith("pfm")) {
+        _hdr_screen_filename = filename;
+        _save_hdr_screen = true;
+        updateGL(); 
+    } else {
+        saveSnapshot(filename, true);
+    }
 }
 
 

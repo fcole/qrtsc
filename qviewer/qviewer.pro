@@ -38,7 +38,7 @@ else {
 }
 
 QT += opengl xml
-TARGET = qviewer
+TARGET = qrtsc
 
 PRE_TARGETDEPS += ../libgq/$${DBGNAME}/libgq.a
 DEPENDPATH += ../libgq/include

@@ -69,11 +69,12 @@ static dkBool use_texture("Style->Use Texture", false);
 static dkBool draw_faded("Style->Draw Faded", true);
 static dkBool draw_colors("Style->Draw Colors", false);
 static dkBool use_hermite("Style->Use Hermite", false);
+static dkBool single_pixel_lines("Style->Single Pixel Wide", false);
 
 // Mesh colorization
 vector<Color> curv_colors, gcurv_colors;
 static QStringList mesh_color_types = QStringList() << "White" << "Gray" 
-    << "Curvature" << "Gaussian C." << "Mesh";
+    << "Black" << "Curvature" << "Gaussian C." << "Mesh";
 static dkStringList color_style("Style->Mesh Color", mesh_color_types);
 static dkBool draw_edges("Style->Draw Edges", false);
 
@@ -117,6 +118,14 @@ void draw_tstrips()
 	}
 }
 
+// Set the line width. Sometimes we just want single pixel lines.
+void set_line_width(float amount)
+{
+    if (single_pixel_lines)
+        glLineWidth(1.0);
+    else
+        glLineWidth(amount);
+}
 
 // Create a texture with a black line of the given width.
 void make_texture(float width)
@@ -368,6 +377,8 @@ void draw_base_mesh()
         glColor3f(1,1,1);
     } else if (color_style == "Gray") {
         glColor3f(0.65, 0.65, 0.65);
+    } else if (color_style == "Black") {
+        glColor3f(0.0, 0.0, 0.0);
     } else if (color_style == "Curvature") {
         if (curv_colors.empty())
             compute_curv_colors();
@@ -455,7 +466,7 @@ void draw_base_mesh()
 	glDepthMask(GL_FALSE); // Do not remove me, else get dotted lines
 
 	// Draw the mesh edges on top, if requested
-	glLineWidth(1);
+	set_line_width(1);
 	if (draw_edges) {
 		glPolygonMode(GL_FRONT, GL_LINE);
 		glColor3f(0.5, 1.0, 1.0);
@@ -1285,7 +1296,7 @@ void draw_silhouette(const vector<float> &ndotv)
 	glDepthMask(GL_FALSE);
 
 	currcolor = vec(0.0, 0.0, 0.0);
-	glLineWidth(6);
+	set_line_width(6);
 	glBegin(GL_LINES);
 	draw_isolines(ndotv, vector<float>(), vector<float>(), ndotv,
 		      false, false, false, 0.0f);
@@ -1314,10 +1325,10 @@ void draw_boundaries(bool do_hidden)
 	themesh->need_across_edge();
 	if (do_hidden) {
 		glColor3f(0.6, 0.6, 0.6);
-		glLineWidth(1.5);
+		set_line_width(1.5);
 	} else {
 		glColor3f(0.05, 0.05, 0.05);
-		glLineWidth(2.5);
+		set_line_width(2.5);
 	}
 	glBegin(GL_LINES);
 	for (int i = 0; i < themesh->faces.size(); i++) {
@@ -1358,9 +1369,9 @@ void draw_isophotes(const vector<float> &ndotv)
 	float dt = 1.0f / niso;
 	for (int it = 0; it < niso; it++) {
 		if (it == 0) {
-			glLineWidth(2);
+			set_line_width(2);
 		} else {
-			glLineWidth(1);
+			set_line_width(1);
 			for (int i = 0; i < nv; i++)
 				ndotl[i] -= dt;
 		}
@@ -1380,7 +1391,7 @@ void draw_isophotes(const vector<float> &ndotv)
 	for (int i = 0; i < nv; i++)
 		ndotl[i] += dt * (niso-1);
 	for (int it = 1; it < niso; it++) {
-		glLineWidth(1.0);
+		set_line_width(1.0);
 		for (int i = 0; i < nv; i++)
 			ndotl[i] += dt;
 		glBegin(GL_LINES);
@@ -1409,7 +1420,7 @@ void draw_topolines(const vector<float> &ndotv)
 	}
 
 	// Draw the topo lines
-	glLineWidth(1);
+	set_line_width(1);
 	glColor3f(0.5, 0.5, 0.5);
 	for (int it = 0; it < ntopo; it++) {
 		glBegin(GL_LINES);
@@ -1428,10 +1439,10 @@ void draw_misc(const vector<float> &ndotv, const vector<float> &DwKr,
 {
 	if (do_hidden) {
 		currcolor = vec(1, 0.5, 0.5);
-		glLineWidth(1);
+		set_line_width(1);
 	} else {
 		currcolor = vec(1, 0, 0);
-		glLineWidth(2);
+		set_line_width(2);
 	}
 
 	int nv = themesh->vertices.size();
@@ -1511,7 +1522,7 @@ void draw_mesh()
 					currcolor = vec(0.55, 0.55, 0.55);
 			}
 			if (draw_colors)
-			glLineWidth(2);
+			set_line_width(2);
 			glBegin(GL_LINES);
 			draw_mesh_app_ridges(ndotv, q1, t1, Dt1q1, true,
 				test_ar, ar_thresh / sqr(feature_size));
@@ -1523,7 +1534,7 @@ void draw_mesh()
 		if (draw_ridges) {
 			if (draw_colors)
 				currcolor = vec(0.72, 0.6, 0.72);
-			glLineWidth(1);
+			set_line_width(1);
 			glBegin(GL_LINES);
 			draw_mesh_ridges(true, ndotv, false, test_rv,
 					 rv_thresh / feature_size);
@@ -1532,7 +1543,7 @@ void draw_mesh()
 		if (draw_valleys) {
 			if (draw_colors)
 				currcolor = vec(0.8, 0.72, 0.68);
-			glLineWidth(1);
+			set_line_width(1);
 			glBegin(GL_LINES);
 			draw_mesh_ridges(false, ndotv, false, test_rv,
 					 rv_thresh / feature_size);
@@ -1549,7 +1560,7 @@ void draw_mesh()
 				else
 					currcolor = vec(0.55, 0.55, 0.55);
 			}
-			glLineWidth(2);
+			set_line_width(2);
 			glBegin(GL_LINES);
 			float thresh = ph_thresh / sqr(feature_size);
 			if (draw_phridges)
@@ -1570,7 +1581,7 @@ void draw_mesh()
 					currcolor = vec(0.55,0.55,0.55);
 			}
 			float fade = draw_faded ? 0.03f / sqr(feature_size) : 0.0f;
-			glLineWidth(2.5);
+			set_line_width(2.5);
 			glBegin(GL_LINES);
 			draw_isolines(kr, shtest_num, sctest_den, ndotv,
 				      false, use_hermite, test_sh, fade);
@@ -1583,7 +1594,7 @@ void draw_mesh()
 				     0.03f / sqr(feature_size) : 0.0f;
 			if (draw_colors)
 				currcolor = vec(0.5, 0.5, 1.0);
-			glLineWidth(1.5);
+			set_line_width(1.5);
 			glBegin(GL_LINES);
 			draw_isolines(kr, sctest_num, sctest_den, ndotv,
 				      false, use_hermite, test_sc, fade);
@@ -1593,7 +1604,7 @@ void draw_mesh()
 		if (draw_c) {
 			if (draw_colors)
 				currcolor = vec(0.4, 0.8, 0.4);
-			glLineWidth(1.5);
+			set_line_width(1.5);
 			glBegin(GL_LINES);
 			draw_isolines(ndotv, kr, vector<float>(), ndotv,
 				      false, false, test_c, 0.0f);
@@ -1626,7 +1637,7 @@ void draw_mesh()
 	if (draw_apparent) {
 		if (draw_colors)
 			currcolor = vec(0.4, 0.4, 0);
-		glLineWidth(2.5);
+		set_line_width(2.5);
 		glBegin(GL_LINES);
 		draw_mesh_app_ridges(ndotv, q1, t1, Dt1q1, true,
 			test_ar, ar_thresh / sqr(feature_size));
@@ -1639,7 +1650,7 @@ void draw_mesh()
 	if (draw_ridges) {
 		if (draw_colors)
 			currcolor = vec(0.3, 0.0, 0.3);
-		glLineWidth(2);
+		set_line_width(2);
 		glBegin(GL_LINES);
 		draw_mesh_ridges(true, ndotv, true, test_rv,
 				 rv_thresh / feature_size);
@@ -1648,7 +1659,7 @@ void draw_mesh()
 	if (draw_valleys) {
 		if (draw_colors)
 			currcolor = vec(0.5, 0.3, 0.2);
-		glLineWidth(2);
+		set_line_width(2);
 		glBegin(GL_LINES);
 		draw_mesh_ridges(false, ndotv, true, test_rv,
 				 rv_thresh / feature_size);
@@ -1665,7 +1676,7 @@ void draw_mesh()
 			else
 				currcolor = vec(0, 0, 0);
 		}
-		glLineWidth(2);
+		set_line_width(2);
 		glBegin(GL_LINES);
 		float thresh = ph_thresh / sqr(feature_size);
 		if (draw_phridges)
@@ -1687,7 +1698,7 @@ void draw_mesh()
 				currcolor = vec(0.3,0.3,0.3);
 		}
 		float fade = draw_faded ? 0.03f / sqr(feature_size) : 0.0f;
-		glLineWidth(2.5);
+		set_line_width(2.5);
 		glBegin(GL_LINES);
 		draw_isolines(kr, shtest_num, sctest_den, ndotv,
 			      true, use_hermite, test_sh, fade);
@@ -1701,7 +1712,7 @@ void draw_mesh()
 			currcolor = vec(0.5, 0.5, 1.0);
 		else
 			currcolor = vec(0.6, 0.6, 0.6);
-		glLineWidth(1.5);
+		set_line_width(1.5);
 		glBegin(GL_LINES);
 		draw_isolines(kr, sctest_num, sctest_den, ndotv,
 			      true, use_hermite, false, 0.0f);
@@ -1714,7 +1725,7 @@ void draw_mesh()
 		float fade = draw_faded ? 0.03f / sqr(feature_size) : 0.0f;
 		if (draw_colors)
 			currcolor = vec(0.0, 0.0, 0.8);
-		glLineWidth(2.5);
+		set_line_width(2.5);
 		glBegin(GL_LINES);
 		draw_isolines(kr, sctest_num, sctest_den, ndotv,
 			      true, use_hermite, true, fade);
@@ -1723,7 +1734,7 @@ void draw_mesh()
 	if (draw_c && !use_texture) {
 		if (draw_colors)
 			currcolor = vec(0.0, 0.6, 0.0);
-		glLineWidth(2.5);
+		set_line_width(2.5);
 		glBegin(GL_LINES);
 		draw_isolines(ndotv, kr, vector<float>(), ndotv,
 			      false, false, true, 0.0f);
@@ -1752,6 +1763,13 @@ void setCameraTransform(xform main)
 // Draw the scene
 void redraw()
 {
+    if (color_style == "Black") {
+        glClearColor(0.0,0.0,0.0,0.0);
+    } else {
+        glClearColor(1.0,1.0,1.0,0.0);
+    }
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     draw_mesh();
 }
 

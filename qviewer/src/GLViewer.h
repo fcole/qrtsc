@@ -16,6 +16,7 @@ See the COPYING file for details.
 #define GLVIEWER_H_
 
 #include "GQInclude.h"
+#include "GQFramebufferObject.h"
 
 #include <qglviewer.h>
 
@@ -32,6 +33,8 @@ public:
     void finishInit();
     void resetView();
 
+    void saveScreenshot(QString filename);
+
     void setDisplayTimers(bool display) { _display_timers = display; }
 
 protected:
@@ -42,6 +45,9 @@ private:
     bool   _inited;
     bool   _visible;
     bool   _display_timers;
+    bool   _save_hdr_screen;
+    QString _hdr_screen_filename;
+    GQFramebufferObject _hdr_fbo;
 
     Scene* _scene;
 
