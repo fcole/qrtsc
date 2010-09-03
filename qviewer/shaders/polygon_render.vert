@@ -6,7 +6,7 @@ Copyright (c) 2009 Forrester Cole
 
 A basic vertex shader used with multiple programs.
 
-libnpr is distributed under the terms of the GNU General Public License.
+qviewer is distributed under the terms of the GNU General Public License.
 See the COPYING file for details.
 
 \*****************************************************************************/
