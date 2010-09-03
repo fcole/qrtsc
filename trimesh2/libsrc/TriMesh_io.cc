@@ -6,6 +6,10 @@ TriMesh_io.cc
 Input and output of triangle meshes
 Can read: PLY (triangle mesh and range grid), OFF, OBJ, RAY, SM, 3DS, VVD
 Can write: PLY (triangle mesh and range grid), OFF, OBJ, RAY, SM, C++
+
+read_obj modified by Forrester Cole (fcole@cs.princeton.edu) to
+read texture coordinates.
+
 */
 
 #include <stdio.h>

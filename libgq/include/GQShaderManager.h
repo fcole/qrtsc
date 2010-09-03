@@ -49,9 +49,9 @@ class GQShaderRef
         const GQShaderRef& operator=(const GQShaderRef& input);
 
         const QString& name() const { return _name; }
-		bool isValid() const;
-	
-		int  uniformLocation( const QString& name ) const;
+        bool isValid() const;
+    
+        int  uniformLocation( const QString& name ) const;
         int  uniformLocationExistsCheck( const QString& name ) const;
         bool setUniform1f( const QString& name, float value ) const;
         bool setUniform1i( const QString& name, int value ) const;
@@ -65,11 +65,11 @@ class GQShaderRef
         bool setUniformMatrix4fv( const QString& name, const float* value ) const;
         //bool setUniformXform( const QString& name, const xform& xf ) const;
         bool setUniformMatrixUpper3x3( const QString& name, const xform& xf ) const;
-	
-		bool setUniformVec3Array( const QString& name, const QVector<vec>& v, int count = -1 ) const;
-		bool setUniformVec2Array( const QString& name, const QVector<vec2>& v, int count = -1 ) const;
-	
-		int  attribLocation( const QString& name ) const;
+    
+        bool setUniformVec3Array( const QString& name, const QVector<vec>& v, int count = -1 ) const;
+        bool setUniformVec2Array( const QString& name, const QVector<vec2>& v, int count = -1 ) const;
+    
+        int  attribLocation( const QString& name ) const;
 
         bool bindNamedTexture( const QString& name, const GQTexture* tex ) const;
 
@@ -83,28 +83,28 @@ class GQShaderRef
         QString _name;
         int     _guid;
 
-friend class GQShaderManager;
+    friend class GQShaderManager;
 };
 
 class GQShaderManager
 {
     public:
-		static GQShaderStatus status() { return _status; }
+        static GQShaderStatus status() { return _status; }
         static void initialize();
-		static void deinitialize();
-		static void reload();
+        static void deinitialize();
+        static void reload();
 
         static void setShaderDirectory( const QDir& directory ) { _shader_directory = directory; }
 
- 		static GQShaderRef bindProgram( const QString& name );
+         static GQShaderRef bindProgram( const QString& name );
         static const QString& currentProgramName() { return _current_program_name; }
        
     // interface to the shader ref class
-	protected:
-		static void unbindProgram( int program_bind_guid );
+    protected:
+        static void unbindProgram( int program_bind_guid );
 
-		static int  uniformLocation( int program_bind_guid,  const QString& name );
-		static int  attribLocation( int program_bind_guid, const QString& name );
+        static int  uniformLocation( int program_bind_guid,  const QString& name );
+        static int  attribLocation( int program_bind_guid, const QString& name );
 
         static bool bindNamedTexture(int program_bind_guid, const QString& name, 
                                      const GQTexture* tex );
@@ -116,12 +116,12 @@ class GQShaderManager
     private:
         static void checkHardwareCompatibility();
 
-		static int  filterWarnings( QStringList& log );
-		static void shaderInfoLog( const QString& filename, GLuint obj );
-		static void programInfoLog( const QString& filename, GLuint obj );
+        static int  filterWarnings( QStringList& log );
+        static void shaderInfoLog( const QString& filename, GLuint obj );
+        static void programInfoLog( const QString& filename, GLuint obj );
         static void processCompileReport();
 
-		static QString loadShaderFile( const QString& programname, const QString& filename );
+        static QString loadShaderFile( const QString& programname, const QString& filename );
 
         static void setGeometryShaderProgramParams(const QString& program_name, 
                                                    GLuint program_handle, 
@@ -130,9 +130,9 @@ class GQShaderManager
         static void incProgramRefGuid();
 
     private:
-		static QHash<QString, int> _program_hash;
-		static QVector<GLuint> _programs;
-		static QVector<GLuint> _shaders;
+        static QHash<QString, int> _program_hash;
+        static QVector<GLuint> _programs;
+        static QVector<GLuint> _shaders;
 
         static QDir           _shader_directory;
 
@@ -141,7 +141,7 @@ class GQShaderManager
         static bool           _dump_compile_report;
         static int            _warning_level;
 
-		static int			  _current_program;
+        static int              _current_program;
         static QString        _current_program_name;
 
         static QVector<QString> _bound_texture_names;
@@ -150,9 +150,9 @@ class GQShaderManager
         static int            _current_program_ref_guid;
         static int            _current_program_ref_count;
 
-		static GQShaderStatus _status;
+        static GQShaderStatus _status;
 
-	friend class GQShaderRef;
+    friend class GQShaderRef;
 };
 
 #endif /*GQ_SHADER_MANAGER_H_*/

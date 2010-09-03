@@ -1,3 +1,15 @@
+/*****************************************************************************\
+
+GQDraw.cc
+Author: Forrester Cole (fcole@cs.princeton.edu)
+Copyright (c) 2009 Forrester Cole
+
+Utility drawing calls that wrap OpenGL calls.
+
+libgq is distributed under the terms of the GNU General Public License.
+See the COPYING file for details.
+
+\*****************************************************************************/
 
 #include "GQDraw.h"
 

@@ -4,6 +4,9 @@ Princeton University
 
 TriMesh_connectivity.cc
 Manipulate data structures that describe connectivity between faces and verts.
+
+Modified by Forrester Cole (fcole@cs.princeton.edu) 
+to maintain CCW ordering of adjacent faces.
 */
 
 

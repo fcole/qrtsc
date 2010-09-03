@@ -11,6 +11,9 @@ For meshes, uses average of per-face normals, weighted according to:
   Journal of Graphics Tools, Vol. 4, No. 2, 1999.
 
 For raw point clouds, fits plane to k nearest neighbors.
+
+Modified by Forrester Cole (fcole@cs.princeton.edu) to include computation
+of per-vertex texture coordinates.
 */
 
 #include <stdio.h>

@@ -1,11 +1,15 @@
-/******************************************************************************\
- *                                                                            *
- *  filename : Console.h                                                      *
- *  authors  : Forrester Cole                                                 *
- *                                                                            *
- *  Class for window based command line operations                            *
- *                                                                            *
-\******************************************************************************/
+/*****************************************************************************\
+
+Console.h
+Author: Forrester Cole (fcole@cs.princeton.edu)
+Copyright (c) 2010 Forrester Cole
+
+Class for window based command line operations
+
+demoutils is distributed under the terms of the GNU General Public License.
+See the COPYING file for details.
+
+\*****************************************************************************/
 
 #ifndef CONSOLE_H_
 #define CONSOLE_H_

@@ -1,3 +1,16 @@
+/*****************************************************************************\
+
+DialsAndKnobs.cc
+Author: Forrester Cole (fcole@cs.princeton.edu)
+Copyright (c) 2010 Forrester Cole
+
+An easy and simple way to expose variables in a Qt UI.
+
+demoutils is distributed under the terms of the GNU General Public License.
+See the COPYING file for details.
+
+\*****************************************************************************/
+
 #include "DialsAndKnobs.h"
 #include <assert.h>
 

@@ -4,7 +4,7 @@ MainWindow.cc
 Author: Forrester Cole (fcole@cs.princeton.edu)
 Copyright (c) 2009 Forrester Cole
 
-dpix is distributed under the terms of the GNU General Public License.
+qviewer is distributed under the terms of the GNU General Public License.
 See the COPYING file for details.
 
 \*****************************************************************************/

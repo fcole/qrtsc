@@ -1,3 +1,16 @@
+/*****************************************************************************\
+
+Console.cc
+Author: Forrester Cole (fcole@cs.princeton.edu)
+Copyright (c) 2010 Forrester Cole
+
+Class for window based command line operations
+
+demoutils is distributed under the terms of the GNU General Public License.
+See the COPYING file for details.
+
+\*****************************************************************************/
+
 #include "Console.h"
 #include <QMessageBox>
 #include <QMainWindow>

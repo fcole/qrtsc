@@ -7,7 +7,7 @@ Copyright (c) 2009 Forrester Cole
 The main application window. Handles all the Qt event notifications and
 state management.
 
-dpix is distributed under the terms of the GNU General Public License.
+qviewer is distributed under the terms of the GNU General Public License.
 See the COPYING file for details.
 
 \*****************************************************************************/
