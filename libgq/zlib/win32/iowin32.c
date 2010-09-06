@@ -13,6 +13,9 @@
 #include "ioapi.h"
 #include "iowin32.h"
 
+// There are a lot of unreferenced "opaque" parameters here. --fcole sep. 6 2010
+#pragma warning( disable : 4100)
+
 #ifndef INVALID_HANDLE_VALUE
 #define INVALID_HANDLE_VALUE (0xFFFFFFFF)
 #endif
@@ -67,7 +70,7 @@ voidpf ZCALLBACK win32_open_file_func (opaque, filename, mode)
    const char* filename;
    int mode;
 {
-    const char* mode_fopen = NULL;
+    //const char* mode_fopen = NULL;
     DWORD dwDesiredAccess,dwCreationDisposition,dwShareMode,dwFlagsAndAttributes ;
     HANDLE hFile = 0;
     voidpf ret=NULL;

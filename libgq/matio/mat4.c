@@ -319,9 +319,9 @@ Mat_VarReadNextInfo4(mat_t *mat)
         free(matvar);
         return NULL;
     }
-    M = floor(tmp / 1000.0);
+    M = (int)(floor(tmp / 1000.0));
     tmp -= M*1000;
-    O = floor(tmp / 100.0);
+    O = (int)(floor(tmp / 100.0));
     tmp -= O*100;
     matvar->data_type = floor(tmp / 10.0);
     tmp -= matvar->data_type*10;

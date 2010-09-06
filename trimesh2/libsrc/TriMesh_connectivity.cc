@@ -193,7 +193,7 @@ void TriMesh::need_across_edge()
 			int v2 = faces[i][(j+2)%3];
 			const vector<int> &a1 = adjacentfaces[v1];
 			const vector<int> &a2 = adjacentfaces[v2];
-			for (int k1 = 0; k1 < a1.size(); k1++) {
+			for (int k1 = 0; k1 < (int)(a1.size()); k1++) {
 				int other = a1[k1];
 				if (other == i)
 					continue;

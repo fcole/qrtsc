@@ -25,6 +25,9 @@ using std::fabs;
 #  endif
 #endif
 
+#ifdef _WIN32
+#  define hypot _hypot
+#endif
 
 // LU decomposition
 template <class T, int N>

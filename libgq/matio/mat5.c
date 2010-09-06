@@ -2405,7 +2405,7 @@ WriteCompressedCellArrayField(mat_t *mat,matvar_t *matvar,z_stream *z)
     byteswritten += fwrite(comp_buf,1,buf_size*sizeof(*comp_buf)-z->avail_out,
         mat->fp);
     /* Name of variable */
-    uncomp_buf[0] = array_name_type;
+    uncomp_buf[0] = (Bytef)(array_name_type);
     uncomp_buf[1] = 0;
     z->next_out  = comp_buf;
     z->next_in   = uncomp_buf;
@@ -2821,7 +2821,7 @@ WriteCompressedStructField(mat_t *mat,matvar_t *matvar,z_stream *z)
     byteswritten += fwrite(comp_buf,1,buf_size*sizeof(*comp_buf)-z->avail_out,
         mat->fp);
     /* Name of variable */
-    uncomp_buf[0] = array_name_type;
+    uncomp_buf[0] = (Bytef)(array_name_type);
     uncomp_buf[1] = 0;
     z->next_out  = comp_buf;
     z->next_in   = uncomp_buf;

@@ -181,7 +181,7 @@ void reorder_verts(TriMesh *mesh)
 	vector<int> remap(nv, -1);
 	int next = 0;
 	if (!mesh->grid.empty()) {
-		for (int i = 0; i < mesh->grid.size(); i++) {
+		for (int i = 0; i < (int)(mesh->grid.size()); i++) {
 			int v = mesh->grid[i];
 			if (v == -1)
 				continue;
@@ -190,7 +190,7 @@ void reorder_verts(TriMesh *mesh)
 		}
 	} else if (!mesh->tstrips.empty()) {
 		mesh->convert_strips(TriMesh::TSTRIP_TERM);
-		for (int i = 0; i < mesh->tstrips.size(); i++) {
+		for (int i = 0; i < (int)(mesh->tstrips.size()); i++) {
 			int v = mesh->tstrips[i];
 			if (v == -1)
 				continue;
@@ -199,7 +199,7 @@ void reorder_verts(TriMesh *mesh)
 		}
 		mesh->convert_strips(TriMesh::TSTRIP_LENGTH);
 	} else {
-		for (int i = 0; i < mesh->faces.size(); i++) {
+		for (int i = 0; i < (int)(mesh->faces.size()); i++) {
 			for (int j = 0; j < 3; j++) {
 				int v = mesh->faces[i][j];
 				if (remap[v] == -1)
