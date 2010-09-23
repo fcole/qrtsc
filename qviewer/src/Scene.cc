@@ -186,7 +186,14 @@ void Scene::drawScene()
     if (GQShaderManager::status() != GQ_SHADERS_OK)
         return;
 
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    glMultMatrixd(_camera_transform);
+    
     Rtsc::redraw();
+    
+    glPopMatrix();
 }
 
 void Scene::setupMesh()
@@ -197,7 +204,7 @@ void Scene::setupMesh()
 void Scene::setCameraTransform( const xform& xf )
 {
     _camera_transform = xf;
-    Rtsc::setCameraTransform(inv(xf));
+    Rtsc::setCameraTransform(xf);
 }
 
 void Scene::recordStats(Stats& stats)

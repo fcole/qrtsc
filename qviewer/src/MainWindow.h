@@ -40,7 +40,6 @@ class MainWindow : public QMainWindow
     void on_actionReload_Shaders_triggered();
     void on_actionOpen_Recent_Scene_triggered(int which);
     void on_actionSave_Screenshot_triggered();
-    void on_actionCamera_Perspective_toggled(bool checked);
     void resizeToFitViewerSize(const QString& size);
 
   protected:

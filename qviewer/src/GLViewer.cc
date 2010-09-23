@@ -21,14 +21,26 @@ See the COPYING file for details.
 #include "DialsAndKnobs.h"
 #include "Stats.h"
 
+static dkBool dual_viewport("Camera->Dual Viewport", false, DK_MENU);
+static dkBool camera_perspective("Camera->Perspective", true, DK_MENU);
+
 GLViewer::GLViewer(QWidget* parent) : QGLViewer( parent )
 { 
     _inited = false;
     _visible = false;
     _display_timers = false;
     _scene = NULL;
+    _save_hdr_screen = false;
 
     camera()->frame()->setWheelSensitivity(-1.0);
+
+    _main_camera_frame = camera()->frame();
+    _off_camera_frame = new qglviewer::ManipulatedCameraFrame(*_main_camera_frame);
+    
+    setManipulatedFrame(_off_camera_frame);
+    
+    connect(&camera_perspective, SIGNAL(valueChanged(bool)),
+            this, SLOT(on_actionCamera_Perspective_toggled(bool)));
 }
 
 void GLViewer::resetView()
@@ -45,9 +57,11 @@ void GLViewer::resetView()
         camera()->setFieldOfView(3.1415926f / 6.0f);
         camera()->setZNearCoefficient(0.01f);
         camera()->setOrientation(0,0);
-        xform cam_xf = xform(camera()->frame()->matrix());
-        _scene->setCameraTransform(cam_xf);
         showEntireScene();
+        xform cam_xf = xform(_main_camera_frame->matrix());
+        _scene->setCameraTransform(cam_xf);
+        _off_camera_frame->setPosition(_main_camera_frame->position());
+        _off_camera_frame->setOrientation(_main_camera_frame->orientation());
     }
 }
 
@@ -108,22 +122,22 @@ void GLViewer::draw()
         perf.reset();
     }
     DialsAndKnobs::incrementFrameCounter();
-
-    xform cam_xf = xform(camera()->frame()->matrix());
-    _scene->setCameraTransform(cam_xf);
-
+    
     if (_save_hdr_screen) {
         _hdr_fbo.initFullScreen(1,GQ_ATTACH_DEPTH);
         _hdr_fbo.bind();
     }
+    
 
-    _scene->drawScene();
-
-    if (_save_hdr_screen) {
-        _hdr_fbo.unbind();
-        _hdr_fbo.saveColorTextureToFile(0, _hdr_screen_filename);
-        _save_hdr_screen = false;
+    xform cam_xf;
+    if (dual_viewport) {
+        cam_xf = inv(xform(_off_camera_frame->matrix()));
+    } else {
+        cam_xf = inv(xform(_main_camera_frame->matrix()));
     }
+
+    _scene->setCameraTransform(cam_xf);
+    _scene->drawScene();
 
     if (_display_timers)
     {
@@ -131,6 +145,51 @@ void GLViewer::draw()
     }
 
     in_draw_function = false;
+}
+
+void GLViewer::postDraw()
+{
+    QGLViewer::postDraw();
+    if (dual_viewport) {
+        drawDualViewport();
+    }
+    if (_save_hdr_screen && _hdr_fbo.isBound()) {
+        _hdr_fbo.unbind();
+        _hdr_fbo.saveColorTextureToFile(0, _hdr_screen_filename);
+        _save_hdr_screen = false;
+    }
+}
+
+void GLViewer::drawDualViewport()
+{
+    glPushAttrib(GL_VIEWPORT_BIT | GL_SCISSOR_BIT);
+    glEnable(GL_SCISSOR_TEST);
+    
+    const int border = 3;
+    const int offset = 15;
+    
+    int box_width = width() / 4;
+    int box_height = height() / 4;
+
+    int box_right = width() - offset;
+    int box_top = height() - offset;
+    int box_left = box_right - box_width;
+    int box_bottom = box_top - box_height;
+    
+    // Clear to make a border for the dual box. 
+    glScissor(box_left-border,box_bottom-border,box_width+2*border,box_height+2*border);
+    glClearColor(0,0,0,1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    glViewport(box_left,box_bottom,box_width,box_height);
+    glScissor(box_left,box_bottom,box_width,box_height);
+    
+    xform cam_xf = inv(xform(_main_camera_frame->matrix()));
+
+    _scene->setCameraTransform(cam_xf);
+    _scene->drawScene();
+
+    glPopAttrib();
 }
 
 void GLViewer::saveScreenshot(QString filename) 
@@ -143,5 +202,20 @@ void GLViewer::saveScreenshot(QString filename)
         saveSnapshot(filename, true);
     }
 }
+
+void GLViewer::on_actionCamera_Perspective_toggled(bool checked)
+{
+    if (camera_perspective) {
+        camera()->setType(qglviewer::Camera::PERSPECTIVE);
+    } else {
+        camera()->setType(qglviewer::Camera::ORTHOGRAPHIC);
+    }
+    updateGL();
+}
+
+/*void GLViewer::mousePressEvent(QMouseEvent* event)
+{
+    
+virtual void mouseMoveEvent(QMouseEvent* event);*/
 
 

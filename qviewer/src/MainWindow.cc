@@ -30,7 +30,6 @@ const int CURRENT_INTERFACE_VERSION = 1;
 
 const int MAX_RECENT_SCENES = 4;
 
-static dkBool camera_perspective("Camera->Perspective", true, DK_MENU);
 
 MainWindow::MainWindow( )
 {
@@ -241,8 +240,6 @@ void MainWindow::setupUi()
     windowMenu->addSeparator();
     setupDockWidgets(windowMenu);
 
-    connect(&camera_perspective, SIGNAL(valueChanged(bool)),
-        this, SLOT(on_actionCamera_Perspective_toggled(bool)));
 }
 
 void MainWindow::setupFileMenu()
@@ -338,16 +335,6 @@ void MainWindow::on_actionSave_Scene_triggered()
     }
 }
 
-void MainWindow::on_actionCamera_Perspective_toggled(bool checked)
-{
-    if (checked) {
-        _gl_viewer->camera()->setType(qglviewer::Camera::PERSPECTIVE);
-    }
-    else {
-        _gl_viewer->camera()->setType(qglviewer::Camera::ORTHOGRAPHIC);
-    }
-    _gl_viewer->updateGL();
-}
 
 void MainWindow::on_actionSave_Screenshot_triggered()
 {
@@ -387,6 +374,7 @@ void MainWindow::on_actionReload_Shaders_triggered()
     GQShaderManager::reload();
     _gl_viewer->updateGL();
 }
+
 
 void MainWindow::setupViewerResizeActions(QMenu* menu)
 {
