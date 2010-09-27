@@ -186,14 +186,9 @@ void Scene::drawScene()
     if (GQShaderManager::status() != GQ_SHADERS_OK)
         return;
 
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    glMultMatrixd(_camera_transform);
     
     Rtsc::redraw();
-    
-    glPopMatrix();
+
 }
 
 void Scene::setupMesh()

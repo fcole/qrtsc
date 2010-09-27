@@ -17,6 +17,7 @@ See the COPYING file for details.
 #include <QMessageBox>
 #include <QDir>
 #include <QDebug>
+#include <QMouseEvent>
 #include "Scene.h"
 #include "DialsAndKnobs.h"
 #include "Stats.h"
@@ -35,12 +36,15 @@ GLViewer::GLViewer(QWidget* parent) : QGLViewer( parent )
     camera()->frame()->setWheelSensitivity(-1.0);
 
     _main_camera_frame = camera()->frame();
-    _off_camera_frame = new qglviewer::ManipulatedCameraFrame(*_main_camera_frame);
-    
-    setManipulatedFrame(_off_camera_frame);
+    _off_camera_frame = new qglviewer::ManipulatedCameraFrame;
     
     connect(&camera_perspective, SIGNAL(valueChanged(bool)),
             this, SLOT(on_actionCamera_Perspective_toggled(bool)));
+    connect(_off_camera_frame, SIGNAL(manipulated()), this, SLOT(updateGL()));
+    connect(_off_camera_frame, SIGNAL(spun()), this, SLOT(updateGL()));
+    
+    connect(&dual_viewport, SIGNAL(valueChanged(bool)), this, SLOT(updateGL()));
+    connect(&camera_perspective, SIGNAL(valueChanged(bool)), this, SLOT(updateGL()));
 }
 
 void GLViewer::resetView()
@@ -127,18 +131,21 @@ void GLViewer::draw()
         _hdr_fbo.initFullScreen(1,GQ_ATTACH_DEPTH);
         _hdr_fbo.bind();
     }
+
+    xform main_cam_xf = inv(xform(_main_camera_frame->matrix()));
+    xform off_cam_xf = inv(xform(_off_camera_frame->matrix()));
     
-
-    xform cam_xf;
     if (dual_viewport) {
-        cam_xf = inv(xform(_off_camera_frame->matrix()));
+        glMatrixMode(GL_MODELVIEW);
+        glLoadMatrixd(off_cam_xf);
     } else {
-        cam_xf = inv(xform(_main_camera_frame->matrix()));
+        _off_camera_frame->setPosition(_main_camera_frame->position());
+        _off_camera_frame->setOrientation(_main_camera_frame->orientation());
     }
-
-    _scene->setCameraTransform(cam_xf);
+    
+    _scene->setCameraTransform(main_cam_xf);
     _scene->drawScene();
-
+    
     if (_display_timers)
     {
         perf.updateView();
@@ -170,12 +177,15 @@ void GLViewer::drawDualViewport()
     
     int box_width = width() / 4;
     int box_height = height() / 4;
-
+    
     int box_right = width() - offset;
     int box_top = height() - offset;
     int box_left = box_right - box_width;
     int box_bottom = box_top - box_height;
     
+    // This guy needs to be flipped in Y to match Qt's event coordinates.
+    _dual_viewport_rect = QRect(box_left,height()-box_bottom-box_height,box_width,box_height);
+
     // Clear to make a border for the dual box. 
     glScissor(box_left-border,box_bottom-border,box_width+2*border,box_height+2*border);
     glClearColor(0,0,0,1);
@@ -185,7 +195,9 @@ void GLViewer::drawDualViewport()
     glScissor(box_left,box_bottom,box_width,box_height);
     
     xform cam_xf = inv(xform(_main_camera_frame->matrix()));
-
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixd(cam_xf);
+    
     _scene->setCameraTransform(cam_xf);
     _scene->drawScene();
 
@@ -205,7 +217,7 @@ void GLViewer::saveScreenshot(QString filename)
 
 void GLViewer::on_actionCamera_Perspective_toggled(bool checked)
 {
-    if (camera_perspective) {
+    if (checked) {
         camera()->setType(qglviewer::Camera::PERSPECTIVE);
     } else {
         camera()->setType(qglviewer::Camera::ORTHOGRAPHIC);
@@ -213,9 +225,59 @@ void GLViewer::on_actionCamera_Perspective_toggled(bool checked)
     updateGL();
 }
 
-/*void GLViewer::mousePressEvent(QMouseEvent* event)
+QPoint GLViewer::convertDualViewportCoords(const QPoint& p)
 {
+    return (p - _dual_viewport_rect.topLeft()) *
+    ((float)width() / (float)_dual_viewport_rect.width());
+}
+
+void GLViewer::mousePressEvent(QMouseEvent* event)
+{
+    if (dual_viewport) {
+        if (_dual_viewport_rect.contains(event->pos())) {
+            QMouseEvent new_e = QMouseEvent(event->type(), 
+                 convertDualViewportCoords(event->pos()), event->button(), 
+                 event->buttons(), event->modifiers());
+            camera()->setFrame(_main_camera_frame);
+            QGLViewer::mousePressEvent(&new_e);
+        } else {
+            camera()->setFrame(_off_camera_frame);
+            QGLViewer::mousePressEvent(event);
+        }
+    } else {
+        camera()->setFrame(_main_camera_frame);
+        QGLViewer::mousePressEvent(event);
+    }
+}
     
-virtual void mouseMoveEvent(QMouseEvent* event);*/
+void GLViewer::mouseMoveEvent(QMouseEvent* event)
+{
+    if (dual_viewport) {
+        if (camera()->frame() == _main_camera_frame) {
+            QMouseEvent new_e = QMouseEvent(event->type(), 
+                convertDualViewportCoords(event->pos()), event->button(), 
+                event->buttons(), event->modifiers());
+            QGLViewer::mouseMoveEvent(&new_e);
+            return;
+        }
+    }
+    
+    QGLViewer::mouseMoveEvent(event);
+}
+
+void GLViewer::mouseReleaseEvent(QMouseEvent* event)
+{
+    if (dual_viewport) {
+        if (camera()->frame() == _main_camera_frame) {
+            QMouseEvent new_e = QMouseEvent(event->type(), 
+                                            convertDualViewportCoords(event->pos()), event->button(), 
+                                            event->buttons(), event->modifiers());
+            QGLViewer::mouseReleaseEvent(&new_e);
+            return;
+        }
+    }
+    
+    QGLViewer::mouseReleaseEvent(event);
+}
 
 

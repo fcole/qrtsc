@@ -43,7 +43,7 @@ static dkBool draw_apparent("Lines->Apparent Ridges", false);
 static dkBool draw_K("Lines->K", false);
 static dkBool draw_H("Lines->H", false);
 static dkBool draw_DwKr("Lines->DwKr", false);
-static dkBool draw_bdy("Lines->Boundary", false);
+static dkBool draw_bdy("Lines->Boundary", true);
 static dkBool draw_isoph("Lines->Isophotes", false);
 static dkBool draw_topo("Lines->Topo Lines", false);
 static dkInt niso("Lines-># Isophotes", 20);

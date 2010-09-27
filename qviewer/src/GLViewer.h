@@ -39,14 +39,16 @@ public:
     
 public slots:
     void on_actionCamera_Perspective_toggled(bool checked);
-    /*virtual void mousePressEvent(QMouseEvent* event);
-    virtual void mouseMoveEvent(QMouseEvent* event);*/
+    virtual void mousePressEvent(QMouseEvent* event);
+    virtual void mouseMoveEvent(QMouseEvent* event);
+    virtual void mouseReleaseEvent(QMouseEvent* event);
     
 protected:
     virtual void draw();
     virtual void postDraw();
     virtual void resizeGL( int width, int height );
 
+    QPoint convertDualViewportCoords(const QPoint& p);
     void drawDualViewport();
     
 private:
@@ -56,6 +58,7 @@ private:
     bool   _save_hdr_screen;
     QString _hdr_screen_filename;
     GQFramebufferObject _hdr_fbo;
+    QRect  _dual_viewport_rect;
 
     Scene* _scene;
     qglviewer::ManipulatedCameraFrame* _main_camera_frame;
