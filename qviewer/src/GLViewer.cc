@@ -136,8 +136,13 @@ void GLViewer::draw()
     xform off_cam_xf = inv(xform(_off_camera_frame->matrix()));
     
     if (dual_viewport) {
-        glMatrixMode(GL_MODELVIEW);
-        glLoadMatrixd(off_cam_xf);
+        qglviewer::ManipulatedCameraFrame* cur_frame = camera()->frame();
+        camera()->setFrame(_off_camera_frame);
+        camera()->loadProjectionMatrix();
+        camera()->loadModelViewMatrix();
+        camera()->setFrame(cur_frame);
+        /*glMatrixMode(GL_MODELVIEW);
+        glLoadMatrixd(off_cam_xf);*/
     } else {
         _off_camera_frame->setPosition(_main_camera_frame->position());
         _off_camera_frame->setOrientation(_main_camera_frame->orientation());
@@ -195,8 +200,15 @@ void GLViewer::drawDualViewport()
     glScissor(box_left,box_bottom,box_width,box_height);
     
     xform cam_xf = inv(xform(_main_camera_frame->matrix()));
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixd(cam_xf);
+    
+    qglviewer::ManipulatedCameraFrame* cur_frame = camera()->frame();
+    camera()->setFrame(_main_camera_frame);
+    camera()->loadProjectionMatrix();
+    camera()->loadModelViewMatrix();
+    camera()->setFrame(cur_frame);
+    
+//    glMatrixMode(GL_MODELVIEW);
+//    glLoadMatrixd(cam_xf);
     
     _scene->setCameraTransform(cam_xf);
     _scene->drawScene();

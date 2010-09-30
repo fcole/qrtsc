@@ -146,6 +146,9 @@ void TriMesh::need_adjacentfaces()
     for (int i = 0; i < nv; i++) {
 		adjacentfaces[i].reserve(numadjacentfaces[i]);
 
+        if (numadjacentfaces[i] == 0)
+            continue;
+
         // Rewind to the beginning of this ring.
         int f = adjacentfaces[i][0];
         int f_prev = prev_face(i,f,this);

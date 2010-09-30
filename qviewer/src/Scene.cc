@@ -14,6 +14,7 @@ See the COPYING file for details.
 #include "TriMesh.h"
 #include "DialsAndKnobs.h"
 #include "Rtsc.h"
+#include "Newsils.h"
 
 #include <QFileInfo>
 #include <QStringList>
@@ -194,6 +195,7 @@ void Scene::drawScene()
 void Scene::setupMesh()
 {
     Rtsc::initialize(_trimesh);
+    Newsils::initialize(_trimesh);
 }
 
 void Scene::setCameraTransform( const xform& xf )
