@@ -292,4 +292,19 @@ void GLViewer::mouseReleaseEvent(QMouseEvent* event)
     QGLViewer::mouseReleaseEvent(event);
 }
 
+void GLViewer::keyPressEvent(QKeyEvent* event)
+{
+    if (event->key() == Qt::Key_Space) {
+        if (dual_viewport) {
+            _off_camera_frame->setPosition(_main_camera_frame->position());
+            _off_camera_frame->setOrientation(_main_camera_frame->orientation());
+        } else {
+            resetView();
+        }
+        updateGL();
+    } else {
+        QGLViewer::keyPressEvent(event);
+    }
+}
+
 

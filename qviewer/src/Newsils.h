@@ -11,6 +11,7 @@ void findIsolines(vec viewpos, xform proj);
 void drawIsolines();
     
 void drawEdgeSilhouettes(vec viewpos);
+void drawDualSilhouettes(vec viewpos);
 
 }
 
