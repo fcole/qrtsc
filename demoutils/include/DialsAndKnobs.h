@@ -365,7 +365,8 @@ class DialsAndKnobs : public QDockWidget
     Q_OBJECT
 
   public:
-    DialsAndKnobs(QMainWindow* parent, QMenu* window_menu);
+    DialsAndKnobs(QMainWindow* parent, QMenu* window_menu,
+                  QStringList top_categories = QStringList());
     ~DialsAndKnobs();
     virtual bool event(QEvent* e);
 
@@ -408,6 +409,7 @@ class DialsAndKnobs : public QDockWidget
     QMenu* _parent_window_menu;
     QHash<QString, QMenu*> _menus;
     QHash<QString, QGridLayout*> _layouts;
+    QHash<QString, QDockWidget*> _dock_widgets;
     bool _in_load;
 
     static int _frame_counter;
