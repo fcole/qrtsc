@@ -23,7 +23,6 @@ With contributions by:
 #include <algorithm>
 #include "DialsAndKnobs.h"
 #include "GQInclude.h"
-#include "Newsils.h"
 
 using namespace std;
 
@@ -33,8 +32,8 @@ TriMesh* themesh;
 
 // Toggles for drawing various lines
 static dkBool draw_extsil("Lines->Silhouette", false);
-static dkBool draw_c("Lines->Occluding Contours", false);
-static dkBool draw_sc("Lines->Suggestive Contours", false);
+static dkBool draw_c("Lines->Occluding Contours", true);
+static dkBool draw_sc("Lines->Suggestive Contours", true);
 static dkBool draw_sh("Lines->Suggestive Highlights", false);
 static dkBool draw_phridges("Lines->Principal Hlt. (R)", false);
 static dkBool draw_phvalleys("Lines->Principal Hlt. (V)", false);
@@ -47,14 +46,12 @@ static dkBool draw_DwKr("Lines->DwKr", false);
 static dkBool draw_bdy("Lines->Boundary", true);
 static dkBool draw_isoph("Lines->Isophotes", false);
 static dkBool draw_topo("Lines->Topo Lines", false);
-static dkBool draw_edge_silhouettes("Lines->Edge Silhouettes", false);
-static dkBool draw_dual_silhouettes("Lines->Dual Silhouettes", true);
 static dkInt niso("Lines-># Isophotes", 20);
 static dkInt ntopo("Lines-># Topo Lines", 20);
 static dkFloat topo_offset("Lines->Topo Offset", 0.0);
 
 // Toggles for tests we perform
-static dkBool draw_hidden("Tests->Draw Hidden Lines", true);
+static dkBool draw_hidden("Tests->Draw Hidden Lines", false);
 static dkBool test_c("Tests->Trim \"inside\" contours", false);
 static dkBool test_sc("Tests->Trim SC", true);
 static dkBool test_sh("Tests->Trim SH", true);
@@ -70,7 +67,7 @@ static dkFloat ar_thresh("Tests->AR Thresh", 0.1, 0.0, 1, 0.01);
 // Toggles for style
 static dkBool use_texture("Style->Use Texture", false);
 static dkBool draw_faded("Style->Draw Faded", true);
-static dkBool draw_colors("Style->Draw Colors", true);
+static dkBool draw_colors("Style->Draw Colors", false);
 static dkBool use_hermite("Style->Use Hermite", false);
 static dkBool single_pixel_lines("Style->Single Pixel Wide", false);
 
@@ -79,7 +76,7 @@ vector<Color> curv_colors, gcurv_colors;
 static QStringList mesh_color_types = QStringList() << "White" << "Gray" 
     << "Black" << "Curvature" << "Gaussian C." << "Mesh";
 static dkStringList color_style("Style->Mesh Color", mesh_color_types);
-static dkBool draw_edges("Style->Draw Edges", true);
+static dkBool draw_edges("Style->Draw Edges", false);
 
 // Lighting
 enum { LIGHTING_NONE, LIGHTING_LAMBERTIAN, LIGHTING_LAMBERTIAN2,
@@ -1614,28 +1611,6 @@ void draw_mesh()
 			glEnd();
 		}
         
-        if (draw_edge_silhouettes) {
-            set_line_width(1.5);
-            if (draw_colors) {
-                glColor3f(0.4, 0.1, 0.8);
-            } else {
-                glColor3f(0.55,0.55,0.55);
-            }
-                
-            Newsils::drawEdgeSilhouettes(viewpos);
-        }
-
-        if (draw_dual_silhouettes) {
-            set_line_width(1.5);
-            if (draw_colors) {
-                glColor3f(0.8, 0.1, 0.3);
-            } else {
-                glColor3f(0.55,0.55,0.55);
-            }
-                
-            Newsils::drawDualSilhouettes(viewpos);
-        }
-
 		// Boundaries
 		if (draw_bdy)
 			draw_boundaries(true);
@@ -1768,27 +1743,7 @@ void draw_mesh()
 	if ((draw_sc || draw_c) && use_texture)
 		draw_c_sc_texture(ndotv, kr, sctest_num, sctest_den);
 
-    if (draw_edge_silhouettes) {
-        set_line_width(2.5);
-        if (draw_colors) {
-            glColor3f(0.2, 0, 0.5);
-        } else {
-            glColor3f(0.0,0.0,0.0);
-        }
 
-        Newsils::drawEdgeSilhouettes(viewpos);
-    }
-
-    if (draw_dual_silhouettes) {
-        set_line_width(2.5);
-        if (draw_colors) {
-            glColor3f(0.5, 0, 0.2);
-        } else {
-            glColor3f(0.0,0.0,0.0);
-        }
-
-        Newsils::drawDualSilhouettes(viewpos);
-    }
     
 	// Boundaries
 	if (draw_bdy)

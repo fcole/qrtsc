@@ -440,29 +440,39 @@ DialsAndKnobs::DialsAndKnobs(QMainWindow* parent, QMenu* window_menu,
     _instance = this;
 
     setWidget(&_root_widget);
-    parent->addDockWidget(Qt::RightDockWidgetArea, this);
     setObjectName("dials_and_knobs");
     _parent_menu_bar = parent->menuBar();
     _parent_window_menu = window_menu;
     _in_load = false;
     _frame_counter = 0;
 
-    if (_parent_window_menu) {
-        _parent_window_menu->addAction(this->toggleViewAction());
-    }
-
     for (int i = 0; i < top_categories.size(); i++) {
         QDockWidget* new_dock = new QDockWidget(top_categories[i], parent);
         _dock_widgets[top_categories[i]] = new_dock;
         new_dock->setObjectName(top_categories[i]);
-        parent->addDockWidget(Qt::RightDockWidgetArea, new_dock);
-        if (_parent_window_menu) {
-            _parent_window_menu->addAction(new_dock->toggleViewAction());
-        }
         new_dock->setWidget(new QWidget);
     }
 
     updateLayout();
+
+    // Only add dock widgets to the mainwindow if they have any
+    // widgets in them.
+    for (int i = 0; i < top_categories.size(); i++) {
+        QDockWidget* dock = _dock_widgets[top_categories[i]];
+        if (dock->layout() && dock->layout()->count() > 0) {
+            parent->addDockWidget(Qt::RightDockWidgetArea, dock);
+            if (_parent_window_menu) {
+                _parent_window_menu->addAction(dock->toggleViewAction());
+            }
+        }
+    }
+
+    if (_root_layout && _root_layout->count() > 0) {
+        parent->addDockWidget(Qt::RightDockWidgetArea, this);
+        if (_parent_window_menu) {
+            _parent_window_menu->addAction(this->toggleViewAction());
+        }
+    }
 }
 
 DialsAndKnobs::~DialsAndKnobs()

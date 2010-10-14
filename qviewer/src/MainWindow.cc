@@ -61,7 +61,7 @@ void MainWindow::init( const QDir& working_dir, const QString& scene_name )
     setupUi();
 
     // read back qsettings and update window state and recent file list
-    QSettings settings("newsils", "newsils");
+    QSettings settings("qrtsc", "qrtsc");
     settings.beginGroup("mainwindow");
     QByteArray windowstate = settings.value("windowstate").toByteArray();
     bool restored = restoreState(windowstate, CURRENT_INTERFACE_VERSION);
@@ -106,7 +106,7 @@ void MainWindow::closeEvent( QCloseEvent* event )
     if (_console)
         _console->removeMsgHandler();
 
-    QSettings settings("newsils", "newsils");
+    QSettings settings("qrtsc", "qrtsc");
     settings.beginGroup("mainwindow");
     settings.setValue("windowstate", saveState(CURRENT_INTERFACE_VERSION));
     settings.endGroup();
@@ -286,7 +286,8 @@ void MainWindow::setupFileMenu()
 
 void MainWindow::setupDockWidgets(QMenu* menu)
 {
-    QStringList other_docks = QStringList() << "Lines";
+    QStringList other_docks = QStringList() << "Lines" << "Tests" << 
+        "Style" << "Vectors";
     _dials_and_knobs = new DialsAndKnobs(this, menu, other_docks);
     connect(_dials_and_knobs, SIGNAL(dataChanged()),
         _gl_viewer, SLOT(updateGL()));
@@ -300,7 +301,7 @@ void MainWindow::setupDockWidgets(QMenu* menu)
 void MainWindow::makeWindowTitle()
 {
     QFileInfo fileinfo(_scene_name);
-    QString title = QString("newsils - %1").arg( fileinfo.fileName() );
+    QString title = QString("qrtsc - %1").arg( fileinfo.fileName() );
     setWindowTitle( title );
 }
 

@@ -38,7 +38,7 @@ else {
 }
 
 QT += opengl xml
-TARGET = newsils
+TARGET = qrtsc
 
 PRE_TARGETDEPS += ../libgq/$${DBGNAME}/libgq.a
 DEPENDPATH += ../libgq/include
