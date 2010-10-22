@@ -46,7 +46,7 @@ void TriMesh::need_tstrips()
 
 	int nstrips = 0;
 	int i = 0;
-	while (i < faces.size()) {
+	while (i < (int)(faces.size())) {
 		int next;
 		if (todo.empty()) {
 			next = i++;
@@ -143,7 +143,7 @@ void TriMesh::unpack_tstrips()
 	dprintf("Unpacking triangle strips... ");
 	int nfaces = 0;
 	int i = 0;
-	while (i < tstrips.size()) {
+	while (i < (int)(tstrips.size())) {
 		nfaces += tstrips[i] - 2;
 		i += tstrips[i] + 1;
 	}
@@ -152,7 +152,7 @@ void TriMesh::unpack_tstrips()
 
 	int len = 0;
 	bool flip = false;
-	for (i = 0; i < tstrips.size(); i++) {
+	for (i = 0; i < (int)(tstrips.size()); i++) {
 		if (len == 0) {
 			len = tstrips[i] - 2;
 			flip = false;
@@ -189,7 +189,7 @@ void TriMesh::convert_strips(tstrip_rep rep)
 
 	if (rep == TSTRIP_TERM) {
 		int len = tstrips[0];
-		for (int i = 1; i < tstrips.size(); i++) {
+		for (int i = 1; i < (int)(tstrips.size()); i++) {
 			if (len) {
 				tstrips[i-1] = tstrips[i];
 				len--;
@@ -225,7 +225,7 @@ static void collect_tris_in_strips(vector<int> &tstrips)
 
 	int n = 0, offset = 0;
 	bool have_tri = false, bad_strip = false;
-	for (int i = 0; i < tstrips.size(); i++) {
+	for (int i = 0; i < (int)(tstrips.size()); i++) {
 		if (n == 0) {
 			n = tstrips[i];
 			bad_strip = (n < 3);

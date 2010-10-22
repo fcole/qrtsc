@@ -37,6 +37,8 @@ struct AccumVec {
 	void operator() (const TriMesh *themesh, int v0, T &f,
 			 float w, int v) const
 	{
+		(void)themesh;
+		(void)v0;
 		f += w * field[v];
 	}
 };
@@ -108,7 +110,7 @@ static void diffuse_vert_field(TriMesh *themesh, const ACCUM &accum,
 		// Accumulate weight times field at neighbor
 		accum(themesh, v, flt, w, n);
 		sum_w += w;
-		for (int i = 0; i < themesh->neighbors[n].size(); i++) {
+		for (int i = 0; i < (int)(themesh->neighbors[n].size()); i++) {
 			int nn = themesh->neighbors[n][i];
 			if (themesh->flags[nn] == flag)
 				continue;

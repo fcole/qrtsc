@@ -11,16 +11,9 @@ DESTDIR = $${DBGNAME}
 win32 {
     TEMPLATE = vcapp
     UNAME = Win32
-    CONFIG(debug) {
-        TRIMESH = trimeshd
-    } else {
-        TRIMESH = trimesh
-    }
-    
 }
 else {
     TEMPLATE = app
-    TRIMESH = trimesh
     macx {
         DEFINES += DARWIN
         UNAME = Darwin
@@ -36,6 +29,7 @@ else {
         UNAME = Linux
     }
 }
+TRIMESH = trimesh
 
 QT += opengl xml script
 TARGET = qviewer

@@ -23,6 +23,8 @@ Perform subdivision on a mesh.
 static point loop(TriMesh *mesh, int f1, int f2,
 		  int v0, int v1, int v2, int v3)
 {
+	(void)f1;
+	(void)f2;
 	return 0.125f * (mesh->vertices[v0] + mesh->vertices[v3]) +
 	       0.375f * (mesh->vertices[v1] + mesh->vertices[v2]);
 }
@@ -158,7 +160,7 @@ static point avg_bdy(TriMesh *mesh, int v)
 	point p;
 	int n = 0;
 	const vector<int> &a = mesh->adjacentfaces[v];
-	for (int i = 0; i < a.size(); i++) {
+	for (int i = 0; i < (int)(a.size()); i++) {
 		int f = a[i];
 		for (int j = 0; j < 3; j++) {
 			if (mesh->across_edge[f][j] == -1) {
