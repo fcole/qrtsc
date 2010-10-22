@@ -33,6 +33,9 @@ public:
     void resetView();
 
     void setDisplayTimers(bool display) { _display_timers = display; }
+    
+public slots:
+    void setRandomCamera(int seed);
 
 protected:
     virtual void draw();

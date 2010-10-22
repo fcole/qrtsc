@@ -171,6 +171,8 @@ bool MainWindow::openScene( const QString& filename )
 
     makeWindowTitle();
     
+    _gl_viewer->updateGL();
+    
     return true;
 }
 
@@ -294,7 +296,9 @@ void MainWindow::setupDockWidgets(QMenu* menu)
 
     _console = new Console(this, menu);
     _console->installMsgHandler();
-
+    _console->exposeObjectToScript(this, "mainwindow");
+    _console->exposeObjectToScript(_gl_viewer, "viewer");
+    
     _stats_widget = new StatsWidget(this, menu);
 }
 
@@ -371,7 +375,7 @@ void MainWindow::setFoV(float degrees)
 }
 
 
-void MainWindow::resizeToFitViewerSize( int x, int y )
+void MainWindow::fitViewerSize( int x, int y )
 {
     QSize currentsize = size();
     QSize viewersize = _gl_viewer->size();
@@ -379,10 +383,10 @@ void MainWindow::resizeToFitViewerSize( int x, int y )
     resize( newsize );
 }
 
-void MainWindow::resizeToFitViewerSize(const QString& size)
+void MainWindow::fitViewerSize(const QString& size)
 {
     QStringList dims = size.split("x");
-    resizeToFitViewerSize(dims[0].toInt(), dims[1].toInt());
+    fitViewerSize(dims[0].toInt(), dims[1].toInt());
 }
 
 void MainWindow::on_actionReload_Shaders_triggered()
@@ -408,7 +412,7 @@ void MainWindow::setupViewerResizeActions(QMenu* menu)
     }
 
     connect(&_viewer_size_mapper, SIGNAL(mapped(const QString&)),
-            this, SLOT(resizeToFitViewerSize(const QString&)));
+            this, SLOT(fitViewerSize(const QString&)));
 
     menu->addMenu(resize_menu);
 }

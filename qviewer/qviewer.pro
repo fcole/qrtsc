@@ -37,7 +37,7 @@ else {
     }
 }
 
-QT += opengl xml
+QT += opengl xml script
 TARGET = qviewer
 
 PRE_TARGETDEPS += ../libgq/$${DBGNAME}/libgq.a

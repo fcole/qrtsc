@@ -105,9 +105,23 @@ void dkValue::remove(dkValue* value)
     DialsAndKnobs::notifyUpdateLayout();
 }
 
+QString dkValue::scriptName() const
+{
+    // Sanitize the name for the scripting environment.
+    QString sanitized = name().toLower();
+    sanitized.replace("->", "_");
+    sanitized.replace(" ", "_");
+    return sanitized;
+}
+
 dkValue* dkValue::find(const QString& name)
 {
     return values_hash().value(name);
+}
+
+QList<dkValue*> dkValue::allValues()
+{
+    return values_hash().values();
 }
 
 dkFloat::dkFloat(const QString& name, double value) 

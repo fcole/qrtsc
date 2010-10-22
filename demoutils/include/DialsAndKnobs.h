@@ -56,10 +56,12 @@ class dkValue : public QObject
     virtual bool save(QDomDocument& doc, QDomElement& root) const = 0;
 
     const QString& name() const { return _name; }
+    QString scriptName() const;
     dkLocation location() const { return _location; }
     bool changedLastFrame() const;
     
     static dkValue* find(const QString& name);
+    static QList<dkValue*> allValues();
     static int numValues() { return values().size(); }
 
   protected:

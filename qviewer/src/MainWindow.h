@@ -41,7 +41,7 @@ class MainWindow : public QMainWindow
     void on_actionOpen_Recent_Scene_triggered(int which);
     void on_actionSave_Screenshot_triggered();
     void on_actionCamera_Perspective_toggled(bool checked);
-    void resizeToFitViewerSize(const QString& size);
+    void fitViewerSize(const QString& size);
 
   protected:
     void closeEvent(QCloseEvent* event );
@@ -49,7 +49,7 @@ class MainWindow : public QMainWindow
     bool openScene( const QString& filename );
     bool saveScene( const QString& filename );
 
-    void resizeToFitViewerSize( int x, int y );
+    void fitViewerSize( int x, int y );
     void setFoV(float degrees);
 
     void setupUi();

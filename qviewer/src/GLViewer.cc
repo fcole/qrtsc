@@ -40,7 +40,8 @@ void GLViewer::resetView()
     {
         _scene->boundingSphere(center, radius);
 
-        setSceneRadius( radius );
+        // Fudge the radius to make sure the model fits entirely inside the window.
+        setSceneRadius( radius + radius*0.05);
         setSceneCenter( qglviewer::Vec( center[0], center[1], center[2] ) );
         camera()->setFieldOfView(3.1415926f / 6.0f);
         camera()->setZNearCoefficient(0.01f);
@@ -50,6 +51,20 @@ void GLViewer::resetView()
         showEntireScene();
     }
 }
+
+void GLViewer::setRandomCamera(int seed)
+{
+    if (seed >= 0) {
+        qsrand(seed);
+    }
+    float theta = (float)qrand()/(float)RAND_MAX;
+    float phi = (float)qrand()/(float)RAND_MAX;
+    camera()->setOrientation(theta*2*3.14159,phi*2*3.14159);
+    xform cam_xf = xform(camera()->frame()->matrix());
+    _scene->setCameraTransform(cam_xf);
+    showEntireScene();
+}
+    
 
 void GLViewer::setScene( Scene* scene )
 { 
@@ -70,7 +85,7 @@ void GLViewer::setScene( Scene* scene )
 
 void GLViewer::finishInit()
 {
-    resetView();
+    //resetView();
 
     _inited = true;
 }

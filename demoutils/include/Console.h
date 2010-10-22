@@ -17,8 +17,33 @@ See the COPYING file for details.
 #include <QString>
 #include <QStringList>
 #include <QTextEdit>
+#include <QLineEdit>
 #include <QDockWidget>
+#include <QScriptEngine>
+#include <QStringList>
 #include <QProcess>
+
+class ScriptUtilities : public QObject
+{
+    Q_OBJECT
+    
+  public slots:
+    QStringList findFiles(const QString& dir, const QString& filters);
+    QString basename(const QString& path);
+    QString dirname(const QString& path);
+};
+
+class CommandLine : public QLineEdit
+{
+    Q_OBJECT
+
+  protected:
+    void keyPressEvent(QKeyEvent* event);
+
+  protected:
+    QStringList _history;
+    int         _history_position;
+};
 
 class Console : public QDockWidget
 {
@@ -32,16 +57,27 @@ public:
 
     void installMsgHandler();
     void removeMsgHandler();
+    
+    bool exposeObjectToScript(QObject* object, const QString& name);
 
 public slots:
     void getProcessStdout();
+    void processCommand();
+    void runScript(const QString& filename);
 
 protected:
     static void msgHandler( QtMsgType type, const char* msg );
+    
+protected:
+    void addGlobalsToEngine();
 
 protected:
     QTextEdit _edit_widget;
+    CommandLine _command_line;
     QProcess _process;
+    
+    QScriptEngine _engine;
+    ScriptUtilities _utils;
 
     static Console* _current_msg_console;
 };

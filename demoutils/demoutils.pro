@@ -24,7 +24,7 @@ else {
 }
 
 CONFIG += staticlib
-QT += opengl xml
+QT += opengl xml script
 
 TARGET = demoutils
 
