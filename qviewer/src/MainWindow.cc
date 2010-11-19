@@ -69,6 +69,8 @@ void MainWindow::init( const QDir& working_dir, const QString& scene_name )
     {
         hideAllDockWidgets();
     }
+    QByteArray dk_state = settings.value("dials_and_knobs").toByteArray();
+    restored = _dials_and_knobs->restoreState(dk_state, CURRENT_INTERFACE_VERSION);
 
     settings.endGroup();
     settings.beginGroup("recent_scenes");
@@ -109,6 +111,7 @@ void MainWindow::closeEvent( QCloseEvent* event )
     QSettings settings("qrtsc", "qrtsc");
     settings.beginGroup("mainwindow");
     settings.setValue("windowstate", saveState(CURRENT_INTERFACE_VERSION));
+    settings.setValue("dials_and_knobs", _dials_and_knobs->saveState(CURRENT_INTERFACE_VERSION));
     settings.endGroup();
 
     addCurrentSceneToRecentList();

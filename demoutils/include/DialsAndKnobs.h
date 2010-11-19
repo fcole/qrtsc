@@ -9,6 +9,7 @@
 #include <QDomDocument>
 #include <QSignalMapper>
 #include <QModelIndex>
+#include <QByteArray>
 
 class QGridLayout;
 class QVBoxLayout;
@@ -35,6 +36,7 @@ class dkValue : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString _name READ name)
+    Q_PROPERTY(bool _is_sticky READ isSticky)
 
   public:
     dkValue(const QString& name, dkLocation location);
@@ -46,6 +48,8 @@ class dkValue : public QObject
     const QString& name() const { return _name; }
     dkLocation location() const { return _location; }
     bool changedLastFrame() const;
+    bool isSticky() const { return _is_sticky; }
+    void setSticky(bool sticky);
     
     static dkValue* find(const QString& name);
     static int numValues() { return values().size(); }
@@ -55,11 +59,15 @@ class dkValue : public QObject
     static void remove(dkValue* value);
     static QList<dkValue*>& values();
     static QHash<QString, dkValue*>& values_hash();
+    
+  signals:
+    void stickyChanged(bool changed);
 
   protected:
     QString _name;
     dkLocation _location;
     int        _last_change_frame_number;
+    bool       _is_sticky;
 
   friend class DialsAndKnobs;
 };
@@ -359,14 +367,22 @@ class DialsAndKnobs : public QDockWidget
     virtual bool event(QEvent* e);
 
     bool load(const QString& filename);
-    bool load(const QDomElement& root);
+    bool load(const QDomElement& root, bool set_sticky = false);
     bool save(const QString& filename) const;
-    bool save(QDomDocument& doc, QDomElement& root) const;
-    QDomElement domElement(const QString& name, QDomDocument& doc) const;
+    bool save(QDomDocument& doc, QDomElement& root, 
+              bool only_sticky = false, int version = 0) const;
 
+    QDomElement domElement(const QString& name, QDomDocument& doc, 
+                           bool only_sticky = false) const;
+
+    QByteArray saveState(int version = 0);
+    bool restoreState(const QByteArray& state, int version = 0);
+    
     static int frameCounter() { return _frame_counter; }
     static void incrementFrameCounter() { _frame_counter++; }
     static void notifyUpdateLayout();
+    static QString splitGroup(const QString& path);
+    static QString splitBase(const QString& path);
 
   signals:
     void dataChanged();
@@ -386,12 +402,8 @@ class DialsAndKnobs : public QDockWidget
     
     QMenu* findOrCreateMenu(const QString& group);
     QGridLayout* findOrCreateLayout(const QString& group);
-
-    QString splitGroup(const QString& path);
-    QString splitBase(const QString& path);
-
+    
   protected:
-    QWidget _root_widget;
     QGridLayout* _root_layout;
     QMenuBar* _parent_menu_bar;
     QMenu* _parent_window_menu;

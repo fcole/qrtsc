@@ -18,6 +18,7 @@
 #include <QFileSystemModel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QScrollArea>
 
 #include <DialsAndKnobs_ui.h>
 
@@ -32,6 +33,7 @@ dkValue::dkValue(const QString& name, dkLocation location)
     _name = name;
     _location = location;
     _last_change_frame_number = 0;
+    _is_sticky = false;
     add(this);
 }
 
@@ -59,6 +61,14 @@ bool dkValue::changedLastFrame() const
         return true;
     
     return false;
+}
+
+void dkValue::setSticky(bool sticky)
+{
+    if (sticky != _is_sticky) {
+        _is_sticky = sticky;
+        emit stickyChanged(_is_sticky);
+    }
 }
 
 void dkValue::add(dkValue* value)
@@ -439,7 +449,8 @@ DialsAndKnobs::DialsAndKnobs(QMainWindow* parent, QMenu* window_menu,
     assert(_instance == NULL);
     _instance = this;
 
-    setWidget(&_root_widget);
+    DockScrollArea* scroller = new DockScrollArea;
+    setWidget(scroller);
     setObjectName("dials_and_knobs");
     _parent_menu_bar = parent->menuBar();
     _parent_window_menu = window_menu;
@@ -450,7 +461,8 @@ DialsAndKnobs::DialsAndKnobs(QMainWindow* parent, QMenu* window_menu,
         QDockWidget* new_dock = new QDockWidget(top_categories[i], parent);
         _dock_widgets[top_categories[i]] = new_dock;
         new_dock->setObjectName(top_categories[i]);
-        new_dock->setWidget(new QWidget);
+        DockScrollArea* dock_scroller = new DockScrollArea;
+        new_dock->setWidget(dock_scroller);
     }
 
     updateLayout();
@@ -519,7 +531,7 @@ bool DialsAndKnobs::load(const QString& filename)
 	return load(root); 
 }
 
-bool DialsAndKnobs::load(const QDomElement& root)
+bool DialsAndKnobs::load(const QDomElement& root, bool set_sticky)
 {
     bool ret = true;
     int num_values_read = 0;
@@ -538,6 +550,13 @@ bool DialsAndKnobs::load(const QDomElement& root)
             ret = false;
             continue;
         }
+        
+        if (!set_sticky && value_p->isSticky()) {
+            value_e = value_e.nextSiblingElement();
+            continue;
+        } else if (set_sticky) {
+            value_p->setSticky(true);
+        }
 
         if (!value_p->load(value_e))
         {
@@ -545,14 +564,15 @@ bool DialsAndKnobs::load(const QDomElement& root)
                      qPrintable(name));
             ret = false;
         }
+        
         num_values_read++;
         value_e = value_e.nextSiblingElement();
     }
-    if (num_values_read != dkValue::numValues())
+    /*if (num_values_read != dkValue::numValues())
     {
         qWarning("DialsAndKnobs::load: read elements for %d of %d values",
                 num_values_read, dkValue::numValues());
-    }
+    }*/
     _in_load = false;
 	incrementFrameCounter();
     return ret;
@@ -581,9 +601,11 @@ bool DialsAndKnobs::save(const QString& filename) const
     return true;
 }
 
-bool DialsAndKnobs::save(QDomDocument& doc, QDomElement& root) const
+bool DialsAndKnobs::save(QDomDocument& doc, QDomElement& root, 
+                         bool only_sticky, int version) const
 {
-    QDomElement e = domElement("dials_and_knobs", doc);
+    QDomElement e = domElement("dials_and_knobs", doc, only_sticky);
+    e.setAttribute("version", version);
     if (!e.isNull())
     {
 		if (!root.isNull()) {
@@ -596,17 +618,51 @@ bool DialsAndKnobs::save(QDomDocument& doc, QDomElement& root) const
     return false;
 }
 
-QDomElement DialsAndKnobs::domElement(const QString& name, 
-                                      QDomDocument& doc) const
+QDomElement DialsAndKnobs::domElement(
+        const QString& name, QDomDocument& doc, bool only_sticky) const
 {
     QDomElement element = doc.createElement(name);
     for (int i = 0; i < dkValue::numValues(); i++)
     {
-        dkValue::values()[i]->save(doc, element);
+        dkValue* v = dkValue::values()[i];
+        if (only_sticky && !v->isSticky())
+            continue;
+        v->save(doc, element);
     }
     return element;
 }
 
+QByteArray DialsAndKnobs::saveState(int version)
+{
+    QDomDocument doc("dials_and_knobs");
+	
+	QDomElement blank;
+    QByteArray out;
+	bool ret = save(doc, blank, true, version);
+    if (ret)
+        out = doc.toByteArray(version);
+    return out;
+}
+
+bool DialsAndKnobs::restoreState(const QByteArray& state, int version)
+{
+    if (state.isEmpty())
+        return false;
+    
+    QString parse_errors;
+    QDomDocument doc("dials_and_knobs");
+	if (!doc.setContent(state, &parse_errors))
+	{
+		qWarning("Parse errors: %s", qPrintable(parse_errors));
+		return false;
+	}
+	
+	QDomElement root = doc.documentElement();
+    bool ret = false;
+    if (root.attribute("version", 0).toInt() == version)
+        ret = load(root, true);
+    return ret;
+}
 
 void DialsAndKnobs::addFloatWidgets(dkFloat* dk_float)
 {
@@ -615,7 +671,7 @@ void DialsAndKnobs::addFloatWidgets(dkFloat* dk_float)
     QGridLayout* layout = findOrCreateLayout(group);
     int row = layout->rowCount();
 
-    layout->addWidget(new QLabel(base), row, 0);
+    layout->addWidget(new ValueLabel(dk_float), row, 0);
     ArbitraryPrecisionSpinBox* spin_box = new ArbitraryPrecisionSpinBox;
     spin_box->setMinimum(dk_float->lowerLimit());
     spin_box->setMaximum(dk_float->upperLimit());
@@ -638,7 +694,7 @@ void DialsAndKnobs::addIntWidgets(dkInt* dk_int)
     QGridLayout* layout = findOrCreateLayout(group);
     int row = layout->rowCount();
 
-    layout->addWidget(new QLabel(base), row, 0);
+    layout->addWidget(new ValueLabel(dk_int), row, 0);
     QSpinBox* spin_box = new QSpinBox;
     spin_box->setMinimum(dk_int->lowerLimit());
     spin_box->setMaximum(dk_int->upperLimit());
@@ -662,7 +718,7 @@ void DialsAndKnobs::addBoolWidgets(dkBool* dk_bool)
         QGridLayout* layout = findOrCreateLayout(group);
         int row = layout->rowCount();
 
-        layout->addWidget(new QLabel(base), row, 0);
+        layout->addWidget(new ValueLabel(dk_bool), row, 0);
         QCheckBox* check_box = new QCheckBox;
         check_box->setChecked(dk_bool->value());
         layout->addWidget(check_box, row, 1);
@@ -703,7 +759,7 @@ void DialsAndKnobs::addFilenameWidgets(dkFilename* dk_filename)
     QGridLayout* layout = findOrCreateLayout(group);
     int row = layout->rowCount();
 
-    layout->addWidget(new QLabel(base), row, 0);
+    layout->addWidget(new ValueLabel(dk_filename), row, 0);
     QWidget* container = new QWidget;
     QHBoxLayout* line_layout = new QHBoxLayout;
 
@@ -736,7 +792,7 @@ void DialsAndKnobs::addStringListWidgets(dkStringList* dk_string_list)
         QGridLayout* layout = findOrCreateLayout(group);
         int row = layout->rowCount();
 
-        layout->addWidget(new QLabel(base), row, 0);
+        layout->addWidget(new ValueLabel(dk_string_list), row, 0);
         QComboBox* combo_box = new QComboBox;
         combo_box->addItems(dk_string_list->stringList());
         combo_box->setCurrentIndex(dk_string_list->index());
@@ -790,7 +846,7 @@ void DialsAndKnobs::addImageBrowserWidgets(dkImageBrowser* dk_image_browser)
     QGridLayout* layout = findOrCreateLayout(group);
     int row = layout->rowCount();
 
-    layout->addWidget(new QLabel(base), row, 0);
+    layout->addWidget(new ValueLabel(dk_image_browser), row, 0);
 
     // Might want to make this model deallocate somehow, but it's tricky...
     QFileSystemModel* model = new QFileSystemModel;
@@ -816,7 +872,7 @@ void DialsAndKnobs::addTextWidgets(dkText* dk_text)
     QGridLayout* layout = findOrCreateLayout(group);
     int row = layout->rowCount();
 
-    layout->addWidget(new QLabel(base), row, 0);
+    layout->addWidget(new ValueLabel(dk_text), row, 0);
     UpdatingTextEdit* editor = new UpdatingTextEdit;
 
     layout->addWidget(editor, row, 1);
@@ -851,31 +907,27 @@ void DialsAndKnobs::updateLayout()
     QList<dkValue*>& values = dkValue::values();
     qSort(values.begin(), values.end(), valueSortedBefore);
 
-    if (_root_widget.layout())
+    DockScrollArea* root_scroller = qobject_cast<DockScrollArea*>(this->widget());
+    if (root_scroller->childLayout())
     {
-        delete _root_widget.layout();
+        delete root_scroller->childLayout();
      
         for (int i = 0; i < _dock_widgets.size(); i++) {
-            QWidget* widget = _dock_widgets.values()[i]->widget();
-            if (widget->layout())
-                delete widget->layout();
+            DockScrollArea* dock_scroller = 
+                qobject_cast<DockScrollArea*>(_dock_widgets.values()[i]->widget());
+            if (dock_scroller->childLayout())
+                delete dock_scroller->childLayout();
         }
 
         _layouts.clear();
     }
 
-    QVBoxLayout* vbox = new QVBoxLayout;
     _root_layout = new QGridLayout;
-    vbox->insertLayout(0, _root_layout);
 
-    QHash<QString, QVBoxLayout*> dock_layouts;
     for (int i = 0; i < _dock_widgets.size(); i++) {
         QString name = _dock_widgets.values()[i]->windowTitle();
         QGridLayout* new_layout = new QGridLayout;
-        QVBoxLayout* vbox = new QVBoxLayout;
-        vbox->insertLayout(0, new_layout);
         _layouts[name] = new_layout;
-        dock_layouts[name] = vbox;
     }
 
     for (int i = 0; i < values.size(); i++)
@@ -914,15 +966,12 @@ void DialsAndKnobs::updateLayout()
         }
     }
 
-    vbox->addStretch();
-
-    _root_widget.setLayout(vbox);
+    root_scroller->setChildLayout(_root_layout);
     for (int i = 0; i < _dock_widgets.size(); i++) {
         QString name = _dock_widgets.values()[i]->windowTitle();
-        QWidget* widget = _dock_widgets.values()[i]->widget();
-        QVBoxLayout* layout = dock_layouts[name];
-        layout->addStretch();
-        widget->setLayout(layout);
+        DockScrollArea* dock_scroller = 
+            qobject_cast<DockScrollArea*>(_dock_widgets.values()[i]->widget());
+        dock_scroller->setChildLayout(_layouts[name]);
     }
 }
     

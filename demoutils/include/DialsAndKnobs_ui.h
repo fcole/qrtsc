@@ -6,6 +6,10 @@
 #include <QFileDialog>
 #include <QTextEdit>
 #include <QDoubleSpinBox>
+#include <QScrollArea>
+#include <QLabel>
+
+#include "DialsAndKnobs.h"
 
 class FileNameLineEdit : public QLineEdit
 {
@@ -43,6 +47,39 @@ class ArbitraryPrecisionSpinBox : public QDoubleSpinBox
     ArbitraryPrecisionSpinBox(QWidget* parent = 0);
 
     virtual QString textFromValue( double value ) const;
+};
+
+class DockScrollArea : public QWidget
+{
+    Q_OBJECT
+    
+  public:
+    DockScrollArea(QWidget* parent = 0);
+    
+    virtual QSize sizeHint();
+    QLayout* childLayout() { return _scroller_child.layout(); }
+    void setChildLayout(QLayout* layout);
+
+  protected:
+    QScrollArea _scroller;
+    QWidget _scroller_child;
+};
+
+class ValueLabel : public QLabel
+{
+    Q_OBJECT
+    
+  public:
+    ValueLabel(dkValue* dk_value, QWidget* parent = 0);
+    
+  public slots:
+    void stickyToggled(bool toggle);
+    
+  protected:
+    void contextMenuEvent(QContextMenuEvent *event);
+    
+  protected:
+    dkValue* _dk_value;
 };
 
 
