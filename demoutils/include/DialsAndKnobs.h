@@ -1,3 +1,15 @@
+/*****************************************************************************\
+
+DialsAndKnobs.h
+Author: Forrester Cole (fcole@cs.princeton.edu)
+Copyright (c) 2010 Forrester Cole
+
+An easy and simple way to expose variables in a Qt UI.
+
+demoutils is distributed under the terms of the GNU General Public License.
+See the COPYING file for details.
+
+\*****************************************************************************/
 
 #ifndef _DIALS_AND_KNOBS_H_
 #define _DIALS_AND_KNOBS_H_
@@ -46,12 +58,14 @@ class dkValue : public QObject
     virtual bool save(QDomDocument& doc, QDomElement& root) const = 0;
 
     const QString& name() const { return _name; }
+    QString scriptName() const;
     dkLocation location() const { return _location; }
     bool changedLastFrame() const;
     bool isSticky() const { return _is_sticky; }
     void setSticky(bool sticky);
     
     static dkValue* find(const QString& name);
+    static QList<dkValue*> allValues();
     static int numValues() { return values().size(); }
 
   protected:

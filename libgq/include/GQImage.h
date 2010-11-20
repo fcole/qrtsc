@@ -1,14 +1,17 @@
+/*****************************************************************************\
 
-/******************************************************************************\
- *                                                                            *
- *  filename : GQImage.h                                                      *
- *  author   : R. Keith Morley                                                *
- *           : Adam Finkelstein                                               *
- *           : Forrester Cole                                                 *
- *                                                                            *
- *  Simple 8bit image. Uses QImage for I/O.                                   *
- *                                                                            *
-\******************************************************************************/
+GQImage.h
+Authors: Forrester Cole (fcole@cs.princeton.edu)
+         R. Keith Morley
+         Adam Finkelstein
+Copyright (c) 2009 Forrester Cole
+
+Simple 8bit image. Uses QImage for I/O.
+
+libgq is distributed under the terms of the GNU General Public License.
+See the COPYING file for details.
+
+\*****************************************************************************/
 
 #ifndef _GQ_IMAGE_H_
 #define _GQ_IMAGE_H_

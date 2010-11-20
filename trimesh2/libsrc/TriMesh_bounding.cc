@@ -22,7 +22,7 @@ void TriMesh::need_bbox()
 	dprintf("Computing bounding box... ");
 
 	bbox = vertices[0];
-	for (int i = 1; i < vertices.size(); i++)
+	for (int i = 1; i < (int)(vertices.size()); i++)
 		bbox += vertices[i];
 
 	dprintf("Done.\n  x = %g .. %g, y = %g .. %g, z = %g .. %g\n",

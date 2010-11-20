@@ -4,6 +4,8 @@
 Szymon Rusinkiewicz
 Princeton University
 
+Slightly modifed by Forrester Cole (fcole@cs.princeton.edu)
+
 Color.h
 Random class for encapsulating colors...
 

@@ -1,3 +1,18 @@
+/*****************************************************************************\
+
+GQImage.cc
+Authors: Forrester Cole (fcole@cs.princeton.edu)
+         R. Keith Morley
+         Adam Finkelstein
+Copyright (c) 2009 Forrester Cole
+
+Simple 8bit image. Uses QImage for I/O.
+
+libgq is distributed under the terms of the GNU General Public License.
+See the COPYING file for details.
+
+\*****************************************************************************/
+
 #include <QImage>
 #include <QColor>
 #include <QtGui>

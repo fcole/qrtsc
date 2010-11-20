@@ -33,17 +33,17 @@ public:
     void finishInit();
     void resetView();
 
-    void saveScreenshot(QString filename);
-
     void setDisplayTimers(bool display) { _display_timers = display; }
     
 public slots:
+    void setRandomCamera(int seed);
+    void saveScreenshot(QString filename);
     void on_actionCamera_Perspective_toggled(bool checked);
     virtual void mousePressEvent(QMouseEvent* event);
     virtual void mouseMoveEvent(QMouseEvent* event);
     virtual void mouseReleaseEvent(QMouseEvent* event);
     virtual void keyPressEvent(QKeyEvent* event);
-    
+
 protected:
     virtual void draw();
     virtual void postDraw();

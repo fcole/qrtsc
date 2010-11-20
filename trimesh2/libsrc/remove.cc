@@ -53,7 +53,7 @@ void remove_unused_vertices(TriMesh *mesh)
 	bool had_faces = !mesh->faces.empty();
 	mesh->need_faces();
 	vector<bool> unused(nv, true);
-	for (int i = 0; i < mesh->faces.size(); i++) {
+	for (int i = 0; i < (int)(mesh->faces.size()); i++) {
 		unused[mesh->faces[i][0]] = false;
 		unused[mesh->faces[i][1]] = false;
 		unused[mesh->faces[i][2]] = false;

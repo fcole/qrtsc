@@ -150,6 +150,7 @@ void compute_overlaps(TriMesh *s1, TriMesh *s2,
 		      vector<float> &o1, vector<float> &o2,
 		      float &maxdist, int verbose)
 {
+
 	size_t nv1 = s1->vertices.size(), nv2 = s2->vertices.size();
 
 	timestamp t = now();
@@ -157,12 +158,19 @@ void compute_overlaps(TriMesh *s1, TriMesh *s2,
 	Grid g2(s2->vertices);
 	xform xf12 = inv(xf2) * xf1;
 	xform xf21 = inv(xf1) * xf2;
+	
+#ifdef USE_KD_FOR_OVERLAPS
+	bool pointcloud1 = (s1->faces.empty() && s1->grid.empty() && s1->tstrips.empty());
+	bool pointcloud2 = (s2->faces.empty() && s2->grid.empty() && s2->tstrips.empty());
+	
 	if (maxdist <= 0.0f)
 		maxdist = min(1.0f / g1.scale, 1.0f / g2.scale);
 	float maxdist2 = sqr(maxdist);
-
-	bool pointcloud1 = (s1->faces.empty() && s1->grid.empty() && s1->tstrips.empty());
-	bool pointcloud2 = (s2->faces.empty() && s2->grid.empty() && s2->tstrips.empty());
+#else
+	(void)kd1;
+	(void)kd2;
+	(void)maxdist;
+#endif
 
 	o1.resize(nv1);
 	for (size_t i = 0; i < nv1; i++) {
@@ -215,6 +223,8 @@ static void select_and_match(TriMesh *s1, TriMesh *s2,
 			     float incr, float maxdist, int verbose,
 			     vector<PtPair> &pairs, bool flip)
 {
+	(void)verbose;
+
 	xform xf1r = norm_xf(xf1);
 	xform xf2r = norm_xf(xf2);
 	xform xf12 = inv(xf2) * xf1;
@@ -649,7 +659,7 @@ static float ICP_p2pt(TriMesh *s1, TriMesh *s2, const xform &xf1, xform &xf2,
 		dprintf("Rejected %lu pairs in %.2f msec.\n",
 			(unsigned long) (np - pairs.size()), (t3-t2) * 1000.0f);
 	}
-	if (pairs.size() < (trans_only ? 1 : MIN_PAIRS)) {
+	if ((int)(pairs.size()) < (trans_only ? 1 : MIN_PAIRS)) {
 		if (verbose)
 			dprintf("Too few point pairs.\n");
 		return -1.0f;

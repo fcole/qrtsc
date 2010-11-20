@@ -1,3 +1,17 @@
+/*****************************************************************************\
+
+GQMatlabArray.cc
+Author: Forrester Cole (fcole@cs.princeton.edu)
+Copyright (c) 2010 Forrester Cole
+
+A basic wrapper for reading a single MATLAB format array, for example a 3D
+texture. Uses matio for reading.
+
+libgq is distributed under the terms of the GNU General Public License.
+See the COPYING file for details.
+
+\*****************************************************************************/
+
 #include "GQMatlabArray.h"
 #include "GQInclude.h"
 

@@ -381,7 +381,7 @@ void orient(TriMesh *mesh)
 	dprintf("Auto-orienting mesh... ");
 	unsigned cc = 0;
 	vector<int> cc_farthest;
-	for (int i = 0; i < mesh->faces.size(); i++) {
+	for (int i = 0; i < (int)(mesh->faces.size()); i++) {
 		if (mesh->flags[i] != NONE)
 			continue;
 		mesh->flags[i] = cc;
@@ -397,7 +397,7 @@ void orient(TriMesh *mesh)
 				int v0 = mesh->faces[f][j];
 				int v1 = mesh->faces[f][(j+1)%3];
 				const vector<int> &a = mesh->adjacentfaces[v0];
-				for (int k = 0; k < a.size(); k++) {
+				for (int k = 0; k < (int)(a.size()); k++) {
 					int f1 = a[k];
 					if (mesh->flags[f1] != NONE)
 						continue;
@@ -421,7 +421,7 @@ void orient(TriMesh *mesh)
 	}
 
 	vector<bool> cc_flip(cc, false);
-	for (int i = 0; i < cc; i++) {
+	for (int i = 0; i < (int)(cc); i++) {
 		int f = cc_farthest[i];
 		const point &v0 = mesh->vertices[mesh->faces[f][0]];
 		const point &v1 = mesh->vertices[mesh->faces[f][1]];
@@ -434,7 +434,7 @@ void orient(TriMesh *mesh)
 		int v = mesh->faces[f][j];
 		const vector<int> &a = mesh->adjacentfaces[v];
 		vec n;
-		for (int k = 0; k < a.size(); k++) {
+		for (int k = 0; k < (int)(a.size()); k++) {
 			int f1 = a[k];
 			const point &v0 = mesh->vertices[mesh->faces[f1][0]];
 			const point &v1 = mesh->vertices[mesh->faces[f1][1]];
@@ -445,7 +445,7 @@ void orient(TriMesh *mesh)
 			cc_flip[i] = true;
 	}
 
-	for (int i = 0; i < mesh->faces.size(); i++) {
+	for (int i = 0; i < (int)(mesh->faces.size()); i++) {
 		if (cc_flip[mesh->flags[i]])
 			swap(mesh->faces[i][1], mesh->faces[i][2]);
 	}
@@ -475,7 +475,7 @@ void noisify(TriMesh *mesh, float amount)
 	for (int i = 0; i < nv; i++) {
 		point &v = mesh->vertices[i];
 		// Tangential
-		for (int j = 0; j < mesh->neighbors[i].size(); j++) {
+		for (int j = 0; j < (int)(mesh->neighbors[i].size()); j++) {
 			const point &n = mesh->vertices[mesh->neighbors[i][j]];
 			float scale = amount / (amount + len(n-v));
 			disp[i] += (float) tinyrnd() * scale * (n-v);

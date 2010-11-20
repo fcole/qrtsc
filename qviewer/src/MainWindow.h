@@ -7,7 +7,7 @@ Copyright (c) 2009 Forrester Cole
 The main application window. Handles all the Qt event notifications and
 state management.
 
-dpix is distributed under the terms of the GNU General Public License.
+qviewer is distributed under the terms of the GNU General Public License.
 See the COPYING file for details.
 
 \*****************************************************************************/
@@ -40,15 +40,14 @@ class MainWindow : public QMainWindow
     void on_actionReload_Shaders_triggered();
     void on_actionOpen_Recent_Scene_triggered(int which);
     void on_actionSave_Screenshot_triggered();
-    void resizeToFitViewerSize(const QString& size);
+    void fitViewerSize(const QString& size);
+    bool openScene(const QString& filename);
+    bool saveScene(const QString& filename);
 
   protected:
     void closeEvent(QCloseEvent* event );
 
-    bool openScene( const QString& filename );
-    bool saveScene( const QString& filename );
-
-    void resizeToFitViewerSize( int x, int y );
+    void fitViewerSize( int x, int y );
     void setFoV(float degrees);
 
     void setupUi();

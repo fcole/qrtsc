@@ -10,6 +10,7 @@ DESTDIR = $${DBGNAME}
 
 win32 {
     TEMPLATE = vclib
+    DEFINES += _CRT_SECURE_NO_WARNINGS
 }
 else {
     TEMPLATE = lib

@@ -33,6 +33,9 @@
 #if MAT73
 #   include "mat73.h"
 #endif
+#ifdef _WIN32
+#   define strdup _strdup
+#endif
 
 static void
 ReadData(mat_t *mat, matvar_t *matvar)
@@ -960,7 +963,7 @@ Mat_CalcSubscripts(int rank,int *dims,int index)
         k = 1;
         for ( j = i; j--; )
             k *= dims[j];
-        subs[i] = floor(l / (double)k);
+        subs[i] = (int)(floor(l / (double)k));
         l -= subs[i]*k;
         subs[i]++;
     }

@@ -21,7 +21,7 @@ LIBS += -framework CoreFoundation
 QMAKE_CXXFLAGS += -fopenmp
 QMAKE_LFLAGS += -fopenmp
 
-QT += opengl xml
+QT += opengl xml script
 
 TARGET = qviewer
 

@@ -1,3 +1,16 @@
+/*****************************************************************************\
+ 
+ DialsAndKnobs.cc
+ Author: Forrester Cole (fcole@cs.princeton.edu)
+ Copyright (c) 2010 Forrester Cole
+ 
+ An easy and simple way to expose variables in a Qt UI.
+ 
+ demoutils is distributed under the terms of the GNU General Public License.
+ See the COPYING file for details.
+ 
+ \*****************************************************************************/
+
 #include "DialsAndKnobs.h"
 #include <assert.h>
 
@@ -102,9 +115,23 @@ void dkValue::remove(dkValue* value)
     DialsAndKnobs::notifyUpdateLayout();
 }
 
+QString dkValue::scriptName() const
+{
+    // Sanitize the name for the scripting environment.
+    QString sanitized = name().toLower();
+    sanitized.replace("->", "_");
+    sanitized.replace(" ", "_");
+    return sanitized;
+}
+
 dkValue* dkValue::find(const QString& name)
 {
     return values_hash().value(name);
+}
+
+QList<dkValue*> dkValue::allValues()
+{
+    return values_hash().values();
 }
 
 dkFloat::dkFloat(const QString& name, double value) 

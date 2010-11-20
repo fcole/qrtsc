@@ -6,6 +6,9 @@ Princeton University
 
 TriMesh.h
 Class for triangle meshes.
+
+Modified by Forrester Cole (fcole@cs.princeton.edu)
+to include rudimentary support for texture coordinates.
 */
 
 #include "Vec.h"

@@ -6,6 +6,10 @@ TriMesh_io.cc
 Input and output of triangle meshes
 Can read: PLY (triangle mesh and range grid), OFF, OBJ, RAY, SM, 3DS, VVD
 Can write: PLY (triangle mesh and range grid), OFF, OBJ, RAY, SM, C++
+
+read_obj modified by Forrester Cole (fcole@cs.princeton.edu) to
+read texture coordinates.
+
 */
 
 #include <stdio.h>
@@ -21,6 +25,7 @@ Can write: PLY (triangle mesh and range grid), OFF, OBJ, RAY, SM, C++
 # ifndef strncasecmp
 #  define strncasecmp strnicmp
 # endif
+# define strnicmp _strnicmp
 #endif
 
 #define GET_LINE() do { if (!fgets(buf, 1024, f)) return false; } while (0)
@@ -1208,7 +1213,8 @@ static bool we_are_little_endian()
 	// The following appears to be legal according to
 	// C99 strict-aliasing rules
 	int tmp = 1;
-	return bool(* (unsigned char *) &tmp);
+	//return bool(* (unsigned char *) &tmp);
+	return (* (unsigned char *) &tmp) != 0;
 }
 
 
