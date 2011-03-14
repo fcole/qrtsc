@@ -43,6 +43,7 @@ class MainWindow : public QMainWindow
     void fitViewerSize(const QString& size);
     bool openScene(const QString& filename);
     bool saveScene(const QString& filename);
+    bool saveScreenshot(const QString& filename);
 
   protected:
     void closeEvent(QCloseEvent* event );

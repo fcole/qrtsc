@@ -356,6 +356,19 @@ void MainWindow::on_actionSave_Screenshot_triggered()
 	}
 }
 
+bool MainWindow::saveScreenshot(const QString& filename)
+{
+    QFileInfo info(filename);
+    QDir dir = info.dir();
+    if (!dir.exists()) {
+        qCritical("Directory %s does not exist.", qPrintable(dir.path()));
+        return false;
+    }
+    
+    _gl_viewer->saveScreenshot(filename);
+    return true;
+}
+
 void MainWindow::setFoV(float degrees)
 {
     _gl_viewer->camera()->setFieldOfView( degrees * ( 3.1415926f / 180.0f ) );
