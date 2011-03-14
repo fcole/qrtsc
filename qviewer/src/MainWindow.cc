@@ -17,6 +17,7 @@ See the COPYING file for details.
 #include "GLViewer.h"
 #include "MainWindow.h"
 #include "Scene.h"
+#include "Rtsc.h"
 #include "GQShaderManager.h"
 
 #include "Stats.h"
@@ -240,6 +241,7 @@ void MainWindow::updateRecentScenesMenu()
 void MainWindow::setupUi()
 {
     setupFileMenu();
+    setupMeshMenu();
     QMenu* windowMenu = menuBar()->addMenu(tr("&Window"));
     setupViewerResizeActions(windowMenu);
     windowMenu->addSeparator();
@@ -287,6 +289,26 @@ void MainWindow::setupFileMenu()
     connect(quit_action, SIGNAL(triggered()), 
         this, SLOT(close()));
     fileMenu->addAction(quit_action);
+}
+
+void MainWindow::setupMeshMenu()
+{
+    QMenu* meshMenu = menuBar()->addMenu(tr("&Mesh"));
+    
+    QAction* smoothMeshAction = new QAction(tr("&Smooth Mesh"), 0);
+    connect(smoothMeshAction, SIGNAL(triggered()), 
+            this, SLOT(on_actionSmooth_Mesh_triggered()));
+    meshMenu->addAction(smoothMeshAction);
+
+    QAction* smoothCurvAction = new QAction(tr("&Smooth Curvatures"), 0);
+    connect(smoothCurvAction, SIGNAL(triggered()), 
+            this, SLOT(on_actionSmooth_Curvatures_triggered()));
+    meshMenu->addAction(smoothCurvAction);
+    
+    QAction* smoothCurvDAction = new QAction(tr("&Smooth Curvature Deriv."), 0);
+    connect(smoothCurvDAction, SIGNAL(triggered()), 
+            this, SLOT(on_actionSmooth_Curvature_Deriv_triggered()));
+    meshMenu->addAction(smoothCurvDAction);
 }
 
 void MainWindow::setupDockWidgets(QMenu* menu)
@@ -394,6 +416,30 @@ void MainWindow::on_actionReload_Shaders_triggered()
 {
     GQShaderManager::reload();
     _gl_viewer->updateGL();
+}
+
+void MainWindow::on_actionSmooth_Mesh_triggered()
+{
+    if (_scene) {
+        Rtsc::filter_mesh();
+        _gl_viewer->updateGL();
+    }
+}
+
+void MainWindow::on_actionSmooth_Curvatures_triggered() 
+{
+    if (_scene) {
+        Rtsc::filter_curv();
+        _gl_viewer->updateGL();
+    }
+}
+    
+void MainWindow::on_actionSmooth_Curvature_Deriv_triggered()
+{
+    if (_scene) {
+        Rtsc::filter_dcurv();
+        _gl_viewer->updateGL();
+    }
 }
 
 

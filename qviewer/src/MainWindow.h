@@ -40,6 +40,9 @@ class MainWindow : public QMainWindow
     void on_actionReload_Shaders_triggered();
     void on_actionOpen_Recent_Scene_triggered(int which);
     void on_actionSave_Screenshot_triggered();
+    void on_actionSmooth_Mesh_triggered();
+    void on_actionSmooth_Curvatures_triggered();
+    void on_actionSmooth_Curvature_Deriv_triggered();
     void fitViewerSize(const QString& size);
     bool openScene(const QString& filename);
     bool saveScene(const QString& filename);
@@ -53,6 +56,7 @@ class MainWindow : public QMainWindow
 
     void setupUi();
     void setupFileMenu();
+    void setupMeshMenu();
     void setupDockWidgets(QMenu* menu);
     void makeWindowTitle();
     void hideAllDockWidgets();
