@@ -73,11 +73,12 @@ void GLViewer::resetView()
 void GLViewer::setRandomCamera(int seed)
 {
     if (seed >= 0) {
-        qsrand(seed);
+        qsrand(seed + 27644437);
     }
-    float theta = (float)qrand()/(float)RAND_MAX;
-    float phi = (float)qrand()/(float)RAND_MAX;
-    camera()->setOrientation(theta*2*3.14159,phi*2*3.14159);
+    float z = 2.0*(float)qrand()/(float)RAND_MAX - 1;
+    float theta = asinf(z);
+    float phi = 2.0*3.14159*(float)qrand()/(float)RAND_MAX;
+    camera()->setOrientation(theta,phi);
     xform cam_xf = xform(camera()->frame()->matrix());
     _scene->setCameraTransform(cam_xf);
     showEntireScene();
