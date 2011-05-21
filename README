@@ -1,0 +1,42 @@
+This is qrtsc, a port of rtsc (real-time suggestive contours) to Qt.
+
+The original rtsc by Szymon Rusinkiewicz and Doug DeCarlo can be
+found here:
+
+http://gfx.cs.princeton.edu/proj/sugcon/
+
+
+
+HOW TO BUILD:
+
+You need Qt 4.6 or higher installed. 
+
+On Mac or Linux:
+
+qmake -r qviewer.pro
+make
+
+On Windows:
+
+Open the Qt command prompt, then
+
+qmake -r qviewer.pro
+
+Then open qviewer.sln from Visual Studio and build normally.
+
+Tested on gcc + Ubuntu 10, gcc + Mac OSX 10.6, 
+and Visual Studio 2008 + Windows 7.
+
+
+
+HOW TO USE:
+
+Like rtsc, simply pass a mesh at the command line. Qrtsc accepts
+all types of meshes that rtsc does.
+
+
+More documentation forthcoming at some point (maybe).
+
+
+Any questions or problems, email fcole@csail.mit.edu
+May 21 2011
