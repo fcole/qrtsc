@@ -11,7 +11,16 @@ With contributions by:
   Xiaofeng Mi, Rutgers University
   Tilke Judd, MIT
 
+Port modifications by:
+  Forrester Cole, MIT
+
 */
+
+
+#ifdef WIN32
+#define _USE_MATH_DEFINES
+#include <cmath>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -536,7 +545,7 @@ void compute_perview(vector<float> &ndotv, vector<float> &kr,
 
 		if (draw_apparent) {
 			float csc2theta = 1.0f / (u2 + v2);
-			compute_viewdep_curv(themesh, i, ndotv[i],
+			Rtsc::compute_viewdep_curv(themesh, i, ndotv[i],
 				u2*csc2theta, u*v*csc2theta, v2*csc2theta,
 				q1[i], t1[i]);
 		}
@@ -567,7 +576,7 @@ void compute_perview(vector<float> &ndotv, vector<float> &kr,
 	if (draw_apparent) {
 #pragma omp parallel for
 		for (int i = 0; i < nv; i++)
-			compute_Dt1q1(themesh, i, ndotv[i], q1, t1, Dt1q1[i]);
+			Rtsc::compute_Dt1q1(themesh, i, ndotv[i], q1, t1, Dt1q1[i]);
 	}
 }
 
@@ -1417,7 +1426,7 @@ void draw_lines()
 			if (draw_colors)
                 set_line_width(2);
 			glBegin(GL_LINES);
-			draw_mesh_app_ridges(ndotv, q1, t1, Dt1q1, true,
+			Rtsc::draw_mesh_app_ridges(ndotv, q1, t1, Dt1q1, true,
                                  test_ar, ar_thresh / sqr(feature_size));
 			glEnd();
 		}

@@ -19,9 +19,11 @@ Implements method of
 
 using namespace std;
 
+namespace Rtsc 
+{
 
-extern TriMesh *Rtsc::themesh;
-extern vec Rtsc::currcolor; // Current line color
+extern TriMesh *themesh;
+extern vec currcolor; // Current line color
 bool draw_faded;
 
 
@@ -333,3 +335,4 @@ void draw_mesh_app_ridges(const vector<float> &ndotv, const vector<float> &q1,
 	}
 }
 
+} // namespace Rtsc

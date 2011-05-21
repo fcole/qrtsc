@@ -13,6 +13,8 @@ Implements method of
   ACM Trans. Graphics (Proc. SIGGRAPH), vol. 26, no. 3, 2007.
 */
 
+namespace Rtsc 
+{
 
 // Compute principal view dependent curvatures and directions at vertex i.
 void compute_viewdep_curv(const TriMesh *mesh, int i, float ndotv,
@@ -29,5 +31,7 @@ void compute_Dt1q1(const TriMesh *mesh, int i, float ndotv,
 void draw_mesh_app_ridges(const vector<float> &ndotv, const vector<float> &q1,
 			  const vector<vec2> &t1, const vector<float> &Dt1q1,
 			  bool do_bfcull, bool do_test, float thresh);
+
+}
 
 #endif
