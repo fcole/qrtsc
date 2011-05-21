@@ -19,9 +19,9 @@ See the COPYING file for details.
 #include <QTextEdit>
 #include <QLineEdit>
 #include <QDockWidget>
-#include <QScriptEngine>
 #include <QStringList>
 #include <QProcess>
+#include <QScriptEngine>
 
 class ScriptUtilities : public QObject
 {

@@ -356,20 +356,22 @@ void draw_base_mesh()
     // Actual lighting shaders
     else if (lighting_style == "None") {
         shader = GQShaderManager::bindProgram("nolighting");
-    } else if (lighting_style == "Lambertian") {
-        shader = GQShaderManager::bindProgram("diffuse");
-    } else if (lighting_style == "Lambertian2") {
-        shader = GQShaderManager::bindProgram("diffuse2");
-    } else if (lighting_style == "Hemisphere") {
-        shader = GQShaderManager::bindProgram("hemisphere");
-    } else if (lighting_style == "Toon") {
-        shader = GQShaderManager::bindProgram("toon");
-    } else if (lighting_style == "Toon BW") {
-        shader = GQShaderManager::bindProgram("toonbw");
-    } else if (lighting_style == "Gooch") {
-        shader = GQShaderManager::bindProgram("gooch");
+    } else {
+        if (lighting_style == "Lambertian") {
+            shader = GQShaderManager::bindProgram("diffuse");
+        } else if (lighting_style == "Lambertian2") {
+            shader = GQShaderManager::bindProgram("diffuse2");
+        } else if (lighting_style == "Hemisphere") {
+            shader = GQShaderManager::bindProgram("hemisphere");
+        } else if (lighting_style == "Toon") {
+            shader = GQShaderManager::bindProgram("toon");
+        } else if (lighting_style == "Toon BW") {
+            shader = GQShaderManager::bindProgram("toonbw");
+        } else if (lighting_style == "Gooch") {
+            shader = GQShaderManager::bindProgram("gooch");
+        }
+        shader.setUniform3fv("light_dir_world", light_direction);
     }   
-    shader.setUniform3fv("light_dir_world", light_direction);
 
 	// Draw the mesh, possibly with color and/or lighting
 	glDepthFunc(GL_LESS);

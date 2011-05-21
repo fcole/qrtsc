@@ -16,9 +16,9 @@ else {
 	TEMPLATE = lib
     DEFINES += HAVE_VA_COPY
 
+    QMAKE_CXXFLAGS += -fopenmp
 	macx {
 		DEFINES += DARWIN
-        QMAKE_CXXFLAGS += -fopenmp
 	}
 	else {
 		DEFINES += LINUX
@@ -27,7 +27,10 @@ else {
 
 CONFIG += staticlib
 QT += opengl xml
-
+unix {
+    # strange fix for compile bug in demoutils/Console.
+    QT += script
+}
 TARGET = gq
 
 DEPENDPATH += include

@@ -20,21 +20,19 @@ See the COPYING file for details.
 #    include <glu.h>
 #endif
 #ifdef LINUX
+// There is a strange, bad interaction between Qt and GLee
+// that requires some Qt headers to be included before GLee 
+// under linux (Qt 4.6.2, gcc 4.4.3)
 #    include <QVariant>
-#    include <QTextStream>
-#    include <QDir>
 #    include <QEvent>
 #    include <QComboBox>
 #    include <QMessageBox>
+#    include <QTextStream>
+#    include <QDir>
+#    include <QScriptEngine>
+#    include <QtGlobal>
 #    include <GLee.h>
 #    include <GL/glu.h>
-#    include <QtGlobal>
-#    include <QDir>
-#    include <QVariant>
-#    include <QTextStream>
-#    include <QMessageBox>
-#    include <QEvent>
-#    include <QComboBox>
 #endif
 #ifdef WIN32
 #    define NOMINMAX

@@ -14,6 +14,8 @@ win32 {
 }
 else {
     TEMPLATE = app
+    QMAKE_CXXFLAGS += -fopenmp
+    QMAKE_LFLAGS += -fopenmp
     macx {
         DEFINES += DARWIN
         UNAME = Darwin
@@ -21,8 +23,6 @@ else {
             CONFIG -= app_bundle
         }
         LIBS += -framework CoreFoundation
-        QMAKE_CXXFLAGS += -fopenmp
-        QMAKE_LFLAGS += -fopenmp
     }
     else {
         DEFINES += LINUX

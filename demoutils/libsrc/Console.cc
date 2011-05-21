@@ -30,6 +30,10 @@ See the COPYING file for details.
     #include "windows.h"
 #endif
 
+#ifdef LINUX
+    #include <stdio.h>
+#endif
+
 Console* Console::_current_msg_console = 0;
 
 Console::Console(QMainWindow* parent, QMenu* window_menu) : 
