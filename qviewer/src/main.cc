@@ -1,3 +1,14 @@
+/*****************************************************************************\
+ 
+ MainWindow.cc
+ Author: Forrester Cole (fcole@cs.princeton.edu)
+ Copyright (c) 2009 Forrester Cole
+ 
+ qviewer is distributed under the terms of the GNU General Public License.
+ See the COPYING file for details.
+ 
+ \*****************************************************************************/
+
 #include "GQInclude.h"
 #include "GQShaderManager.h"
 
@@ -23,12 +34,9 @@ QDir findShadersDirectory( const QString& app_path )
 {
     // look for the shaders/programs.xml file to find the working directory
     QStringList candidates;
-    candidates << QDir::currentPath()
-    << QDir::cleanPath(app_path)
-    << QDir::cleanPath(app_path + "/../")
-    << QDir::cleanPath(app_path + "/../../")
-    << QDir::cleanPath(app_path + "/../../../../")
-    << QDir::cleanPath(app_path + "/Contents/MacOS/");
+    candidates << QDir::cleanPath(app_path)
+    << QDir::cleanPath(QDir::currentPath() + "/../")
+    << QDir::currentPath();
 
     for (int i = 0; i < candidates.size(); i++)
     {

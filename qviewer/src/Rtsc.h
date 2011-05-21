@@ -1,3 +1,22 @@
+/*
+ Rtsc.h
+ 
+ A port of real-time suggestive contours to Qt.
+ 
+ Authors:
+ Szymon Rusinkiewicz, Princeton University
+ Doug DeCarlo, Rutgers University
+ 
+ With contributions by:
+ Xiaofeng Mi, Rutgers University
+ Tilke Judd, MIT
+ 
+ Port modifications by:
+ Forrester Cole, MIT
+ 
+ */
+
+
 #include "XForm.h"
 
 class TriMesh;

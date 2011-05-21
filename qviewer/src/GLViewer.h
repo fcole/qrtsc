@@ -7,7 +7,7 @@ Copyright (c) 2009 Forrester Cole
 OpenGL widget for drawing. Handles camera movement and mouse actions.
 Inherits the QGLViewer class by Gilles Debunne.
 
-dpix is distributed under the terms of the GNU General Public License.
+qviewer is distributed under the terms of the GNU General Public License.
 See the COPYING file for details.
 
 \*****************************************************************************/
