@@ -185,7 +185,6 @@ void Scene::drawScene()
 {
     if (GQShaderManager::status() != GQ_SHADERS_OK)
         return;
-
     
     Rtsc::redraw();
 
@@ -200,6 +199,11 @@ void Scene::setCameraTransform( const xform& xf )
 {
     _camera_transform = xf;
     Rtsc::setCameraTransform(xf);
+}
+
+void Scene::setLightDir( const vec& lightdir )
+{
+    Rtsc::setLightDir(lightdir);
 }
 
 void Scene::recordStats(Stats& stats)

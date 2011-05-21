@@ -22,7 +22,7 @@ See the COPYING file for details.
 #include "DialsAndKnobs.h"
 #include "Stats.h"
 
-static dkBool dual_viewport("Camera->Dual Viewport", false, DK_MENU);
+static dkBool off_camera_view("Camera->Off Camera View", false, DK_MENU);
 static dkBool camera_perspective("Camera->Perspective", true, DK_MENU);
 
 GLViewer::GLViewer(QWidget* parent) : QGLViewer( parent )
@@ -38,12 +38,17 @@ GLViewer::GLViewer(QWidget* parent) : QGLViewer( parent )
     _main_camera_frame = camera()->frame();
     _off_camera_frame = new qglviewer::ManipulatedCameraFrame;
     
+    qglviewer::ManipulatedFrame* new_frame = new qglviewer::ManipulatedFrame;
+    new_frame->setReferenceFrame(_main_camera_frame);
+    setManipulatedFrame(new_frame);
+    setMouseBinding(Qt::SHIFT + Qt::LeftButton, FRAME, ROTATE);
+    
     connect(&camera_perspective, SIGNAL(valueChanged(bool)),
             this, SLOT(on_actionCamera_Perspective_toggled(bool)));
     connect(_off_camera_frame, SIGNAL(manipulated()), this, SLOT(updateGL()));
     connect(_off_camera_frame, SIGNAL(spun()), this, SLOT(updateGL()));
     
-    connect(&dual_viewport, SIGNAL(valueChanged(bool)), this, SLOT(updateGL()));
+    connect(&off_camera_view, SIGNAL(valueChanged(bool)), this, SLOT(updateGL()));
     connect(&camera_perspective, SIGNAL(valueChanged(bool)), this, SLOT(updateGL()));
 }
 
@@ -151,20 +156,19 @@ void GLViewer::draw()
     xform main_cam_xf = inv(xform(_main_camera_frame->matrix()));
     xform off_cam_xf = inv(xform(_off_camera_frame->matrix()));
     
-    if (dual_viewport) {
+    if (off_camera_view) {
         qglviewer::ManipulatedCameraFrame* cur_frame = camera()->frame();
         camera()->setFrame(_off_camera_frame);
         camera()->loadProjectionMatrix();
         camera()->loadModelViewMatrix();
         camera()->setFrame(cur_frame);
-        /*glMatrixMode(GL_MODELVIEW);
-        glLoadMatrixd(off_cam_xf);*/
     } else {
         _off_camera_frame->setPosition(_main_camera_frame->position());
         _off_camera_frame->setOrientation(_main_camera_frame->orientation());
     }
     
     _scene->setCameraTransform(main_cam_xf);
+    _scene->setLightDir(vec(manipulatedFrame()->inverseTransformOf(qglviewer::Vec(0,0,1))));
     _scene->drawScene();
     
     if (_display_timers)
@@ -178,8 +182,8 @@ void GLViewer::draw()
 void GLViewer::postDraw()
 {
     QGLViewer::postDraw();
-    if (dual_viewport) {
-        drawDualViewport();
+    if (off_camera_view) {
+        drawThumbnailViewport();
     }
     if (_save_hdr_screen && _hdr_fbo.isBound()) {
         _hdr_fbo.unbind();
@@ -188,7 +192,7 @@ void GLViewer::postDraw()
     }
 }
 
-void GLViewer::drawDualViewport()
+void GLViewer::drawThumbnailViewport()
 {
     glPushAttrib(GL_VIEWPORT_BIT | GL_SCISSOR_BIT);
     glEnable(GL_SCISSOR_TEST);
@@ -205,9 +209,9 @@ void GLViewer::drawDualViewport()
     int box_bottom = box_top - box_height;
     
     // This guy needs to be flipped in Y to match Qt's event coordinates.
-    _dual_viewport_rect = QRect(box_left,height()-box_bottom-box_height,box_width,box_height);
+    _thumbnail_rect = QRect(box_left,height()-box_bottom-box_height,box_width,box_height);
 
-    // Clear to make a border for the dual box. 
+    // Clear to make a border for the thumbnail box. 
     glScissor(box_left-border,box_bottom-border,box_width+2*border,box_height+2*border);
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -222,9 +226,6 @@ void GLViewer::drawDualViewport()
     camera()->loadProjectionMatrix();
     camera()->loadModelViewMatrix();
     camera()->setFrame(cur_frame);
-    
-//    glMatrixMode(GL_MODELVIEW);
-//    glLoadMatrixd(cam_xf);
     
     _scene->setCameraTransform(cam_xf);
     _scene->drawScene();
@@ -253,18 +254,18 @@ void GLViewer::on_actionCamera_Perspective_toggled(bool checked)
     updateGL();
 }
 
-QPoint GLViewer::convertDualViewportCoords(const QPoint& p)
+QPoint GLViewer::convertThumbnailCoords(const QPoint& p)
 {
-    return (p - _dual_viewport_rect.topLeft()) *
-    ((float)width() / (float)_dual_viewport_rect.width());
+    return (p - _thumbnail_rect.topLeft()) *
+    ((float)width() / (float)_thumbnail_rect.width());
 }
 
 void GLViewer::mousePressEvent(QMouseEvent* event)
 {
-    if (dual_viewport) {
-        if (_dual_viewport_rect.contains(event->pos())) {
+    if (off_camera_view) {
+        if (_thumbnail_rect.contains(event->pos())) {
             QMouseEvent new_e = QMouseEvent(event->type(), 
-                 convertDualViewportCoords(event->pos()), event->button(), 
+                 convertThumbnailCoords(event->pos()), event->button(), 
                  event->buttons(), event->modifiers());
             camera()->setFrame(_main_camera_frame);
             QGLViewer::mousePressEvent(&new_e);
@@ -280,10 +281,10 @@ void GLViewer::mousePressEvent(QMouseEvent* event)
     
 void GLViewer::mouseMoveEvent(QMouseEvent* event)
 {
-    if (dual_viewport) {
+    if (off_camera_view) {
         if (camera()->frame() == _main_camera_frame) {
             QMouseEvent new_e = QMouseEvent(event->type(), 
-                convertDualViewportCoords(event->pos()), event->button(), 
+                convertThumbnailCoords(event->pos()), event->button(), 
                 event->buttons(), event->modifiers());
             QGLViewer::mouseMoveEvent(&new_e);
             return;
@@ -295,10 +296,10 @@ void GLViewer::mouseMoveEvent(QMouseEvent* event)
 
 void GLViewer::mouseReleaseEvent(QMouseEvent* event)
 {
-    if (dual_viewport) {
+    if (off_camera_view) {
         if (camera()->frame() == _main_camera_frame) {
             QMouseEvent new_e = QMouseEvent(event->type(), 
-                                            convertDualViewportCoords(event->pos()), event->button(), 
+                                            convertThumbnailCoords(event->pos()), event->button(), 
                                             event->buttons(), event->modifiers());
             QGLViewer::mouseReleaseEvent(&new_e);
             return;
@@ -311,7 +312,7 @@ void GLViewer::mouseReleaseEvent(QMouseEvent* event)
 void GLViewer::keyPressEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_Space) {
-        if (dual_viewport) {
+        if (off_camera_view) {
             _off_camera_frame->setPosition(_main_camera_frame->position());
             _off_camera_frame->setOrientation(_main_camera_frame->orientation());
         } else {

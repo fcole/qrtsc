@@ -13,14 +13,94 @@ See the COPYING file for details.
 -->
 
 <glsl_programs>
-    <program name="polygon_render">
+    <program name="nolighting">
         <shader type="vertex">
             <source filename="version.glsl"/>
             <source filename="polygon_render.vert"/>
         </shader>
         <shader type="fragment">
             <source filename="version.glsl"/>
-            <source filename="polygon_render.frag"/>
+            <source filename="nolighting.frag"/>
+        </shader>
+    </program>
+    <program name="diffuse">
+        <shader type="vertex">
+            <source filename="version.glsl"/>
+            <source filename="polygon_render.vert"/>
+        </shader>
+        <shader type="fragment">
+            <source filename="version.glsl"/>
+            <source filename="diffuse.frag"/>
+        </shader>
+    </program>
+    <program name="diffuse2">
+        <shader type="vertex">
+            <source filename="version.glsl"/>
+            <source filename="polygon_render.vert"/>
+        </shader>
+        <shader type="fragment">
+            <source filename="version.glsl"/>
+            <source filename="diffuse2.frag"/>
+        </shader>
+    </program>
+    <program name="hemisphere">
+        <shader type="vertex">
+            <source filename="version.glsl"/>
+            <source filename="polygon_render.vert"/>
+        </shader>
+        <shader type="fragment">
+            <source filename="version.glsl"/>
+            <source filename="hemisphere.frag"/>
+        </shader>
+    </program>
+    <program name="toon">
+        <shader type="vertex">
+            <source filename="version.glsl"/>
+            <source filename="polygon_render.vert"/>
+        </shader>
+        <shader type="fragment">
+            <source filename="version.glsl"/>
+            <source filename="toon.frag"/>
+        </shader>
+    </program>
+    <program name="toonbw">
+        <shader type="vertex">
+            <source filename="version.glsl"/>
+            <source filename="polygon_render.vert"/>
+        </shader>
+        <shader type="fragment">
+            <source filename="version.glsl"/>
+            <source filename="toonbw.frag"/>
+        </shader>
+    </program>
+    <program name="gooch">
+        <shader type="vertex">
+            <source filename="version.glsl"/>
+            <source filename="polygon_render.vert"/>
+        </shader>
+        <shader type="fragment">
+            <source filename="version.glsl"/>
+            <source filename="gooch.frag"/>
+        </shader>
+    </program>
+    <program name="depth">
+        <shader type="vertex">
+            <source filename="version.glsl"/>
+            <source filename="polygon_render.vert"/>
+        </shader>
+        <shader type="fragment">
+            <source filename="version.glsl"/>
+            <source filename="depth.frag"/>
+        </shader>
+    </program>
+    <program name="normals">
+        <shader type="vertex">
+            <source filename="version.glsl"/>
+            <source filename="polygon_render.vert"/>
+        </shader>
+        <shader type="fragment">
+            <source filename="version.glsl"/>
+            <source filename="normals.frag"/>
         </shader>
     </program>
 </glsl_programs>

@@ -370,6 +370,13 @@ void dkStringList::setIndex(int i)
     }
 }
 
+void dkStringList::setValue(const QString& value)
+{
+    int i = _string_list.indexOf(value);
+    if (i >= 0)
+        setIndex(i);
+}
+
 dkStringList* dkStringList::find(const QString& name)
 {
     return qobject_cast<dkStringList*>(dkValue::find(name));
@@ -932,7 +939,7 @@ void DialsAndKnobs::notifyUpdateLayout()
 void DialsAndKnobs::updateLayout()
 {
     QList<dkValue*>& values = dkValue::values();
-    qSort(values.begin(), values.end(), valueSortedBefore);
+    //qSort(values.begin(), values.end(), valueSortedBefore);
 
     DockScrollArea* root_scroller = qobject_cast<DockScrollArea*>(this->widget());
     if (root_scroller->childLayout())

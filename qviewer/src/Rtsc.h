@@ -7,6 +7,7 @@ namespace Rtsc {
 // Initialize global variables that were previous done in main()
 void initialize(TriMesh* mesh);
 void setCameraTransform(xform main);
+void setLightDir(const vec& lightdir);
 void redraw();
 
 // Smooth the mesh

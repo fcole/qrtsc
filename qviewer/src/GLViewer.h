@@ -49,8 +49,8 @@ protected:
     virtual void postDraw();
     virtual void resizeGL( int width, int height );
 
-    QPoint convertDualViewportCoords(const QPoint& p);
-    void drawDualViewport();
+    QPoint convertThumbnailCoords(const QPoint& p);
+    void drawThumbnailViewport();
     
 private:
     bool   _inited;
@@ -59,7 +59,7 @@ private:
     bool   _save_hdr_screen;
     QString _hdr_screen_filename;
     GQFramebufferObject _hdr_fbo;
-    QRect  _dual_viewport_rect;
+    QRect  _thumbnail_rect;
 
     Scene* _scene;
     qglviewer::ManipulatedCameraFrame* _main_camera_frame;

@@ -23,6 +23,7 @@ With contributions by:
 #include <algorithm>
 #include "DialsAndKnobs.h"
 #include "GQInclude.h"
+#include "GQShaderManager.h"
 
 using namespace std;
 
@@ -49,6 +50,7 @@ static dkBool draw_topo("Lines->Topo Lines", false);
 static dkInt niso("Lines-># Isophotes", 20);
 static dkInt ntopo("Lines-># Topo Lines", 20);
 static dkFloat topo_offset("Lines->Topo Offset", 0.0);
+static dkBool enable_lines("Lines->Enable Lines", true);
 
 // Toggles for tests we perform
 static dkBool draw_hidden("Tests->Draw Hidden Lines", false);
@@ -70,24 +72,27 @@ static dkBool draw_faded("Style->Draw Faded", true);
 static dkBool draw_colors("Style->Draw Colors", false);
 static dkBool use_hermite("Style->Use Hermite", false);
 static dkBool single_pixel_lines("Style->Single Pixel Wide", false);
-
+static dkBool draw_edges("Style->Draw Edges", false);
+    
 // Mesh colorization
 vector<Color> curv_colors, gcurv_colors;
 static QStringList mesh_color_types = QStringList() << "White" << "Gray" 
-    << "Black" << "Curvature" << "Gaussian C." << "Mesh";
+    << "Black" << "Curvature" << "Gaussian C." << "Mesh" << "Depth"
+    << "Normals";
 static dkStringList color_style("Style->Mesh Color", mesh_color_types);
-static dkBool draw_edges("Style->Draw Edges", false);
 
 // Lighting
-enum { LIGHTING_NONE, LIGHTING_LAMBERTIAN, LIGHTING_LAMBERTIAN2,
-        LIGHTING_HEMISPHERE, LIGHTING_TOON, LIGHTING_TOONBW, LIGHTING_GOOCH };
 static QStringList lighting_types = QStringList() << "None" << "Lambertian" 
     << "Lambertian2" << "Hemisphere" << "Toon" << "Toon BW" << "Gooch";    
 static dkStringList lighting_style("Style->Lighting", lighting_types);
-const int nlighting_styles = 7;
-float lightdir_matrix[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
-static dkBool light_wrt_camera("Style->Light On Camera", true);
-
+vec light_direction;
+    
+// Background color
+static QStringList background_types = QStringList() << "White" << "Black" 
+    << "Gray";
+static dkStringList background_style("Style->Background", background_types);
+    
+    
 // Per-vertex vectors
 static dkBool draw_norm("Vectors->Normals", false);
 static dkBool draw_curv1("Vectors->Principal Curv. 1", false);
@@ -100,11 +105,14 @@ static dkBool draw_wperp("Vectors->W Perp", false);
 float feature_size;	// Used to make thresholds dimensionless
 float currsmooth;	// Used in smoothing
 vec currcolor;		// Current line color
-
-
-// Viewing transform. Dual camera business is handled in GLViewer.
-xform xf;
+xform xf;           // Local copy of the viewing transform
 point viewpos;
+    
+// Per-vertex computed values at each frame
+vector<float> ndotv, kr;
+vector<float> sctest_num, sctest_den, shtest_num;
+vector<float> q1, Dt1q1;
+vector<vec2> t1;
 
 // Draw triangle strips.  They are stored as length followed by values.
 void draw_tstrips()
@@ -285,82 +293,6 @@ void compute_gcurv_colors()
 	}
 }
 
-
-// Set up textures to be used for the lighting.
-// These are indexed by (n dot l), though they are actually 2D textures
-// with a height of 1 because some hardware (cough, cough, ATI) is
-// thoroughly broken for 1D textures...
-void make_light_textures(GLuint *texture_contexts)
-{
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	const int texsize = 256;
-	unsigned char texture[3*texsize];
-
-	glGenTextures(lighting_types.size(), texture_contexts);
-
-	// Simple diffuse shading
-	glBindTexture(GL_TEXTURE_2D, texture_contexts[LIGHTING_LAMBERTIAN]);
-	for (int i = 0; i < texsize; i++) {
-		float z = float(i + 1 - texsize/2) / (0.5f * texsize);
-		texture[i] = max(0, int(255 * z));
-	}
-	glTexImage2D(GL_TEXTURE_2D, 0, 1, texsize, 1, 0,
-		     GL_LUMINANCE, GL_UNSIGNED_BYTE, texture);
-
-	// Diffuse shading with gamma = 2
-	glBindTexture(GL_TEXTURE_2D, texture_contexts[LIGHTING_LAMBERTIAN2]);
-	for (int i = 0; i < texsize; i++) {
-		float z = float(i + 1 - texsize/2) / (0.5f * texsize);
-		texture[i] = max(0, int(255 * sqrt(z)));
-	}
-	glTexImage2D(GL_TEXTURE_2D, 0, 1, texsize, 1, 0,
-		     GL_LUMINANCE, GL_UNSIGNED_BYTE, texture);
-
-	// Lighting from a hemisphere of light
-	glBindTexture(GL_TEXTURE_2D, texture_contexts[LIGHTING_HEMISPHERE]);
-	for (int i = 0; i < texsize; i++) {
-		float z = float(i + 1 - texsize/2) / (0.5f * texsize);
-		texture[i] = max(0, int(255 * (0.5f + 0.5f * z)));
-	}
-	glTexImage2D(GL_TEXTURE_2D, 0, 1, texsize, 1, 0,
-		     GL_LUMINANCE, GL_UNSIGNED_BYTE, texture);
-
-	// A soft gray/white toon shader
-	glBindTexture(GL_TEXTURE_2D, texture_contexts[LIGHTING_TOON]);
-	for (int i = 0; i < texsize; i++) {
-		float z = float(i + 1 - texsize/2) / (0.5f * texsize);
-		int tmp = int(255 * z);
-		texture[i] = min(max(2*(tmp-50), 210), 255);
-	}
-	glTexImage2D(GL_TEXTURE_2D, 0, 1, texsize, 1, 0,
-		     GL_LUMINANCE, GL_UNSIGNED_BYTE, texture);
-
-	// A hard black/white toon shader
-	glBindTexture(GL_TEXTURE_2D, texture_contexts[LIGHTING_TOONBW]);
-	for (int i = 0; i < texsize; i++) {
-		float z = float(i + 1 - texsize/2) / (0.5f * texsize);
-		int tmp = int(255 * z);
-		texture[i] = min(max(25*(tmp-20), 0), 255);
-	}
-	glTexImage2D(GL_TEXTURE_2D, 0, 1, texsize, 1, 0,
-		     GL_LUMINANCE, GL_UNSIGNED_BYTE, texture);
-
-	// A Gooch-inspired yellow-to-blue color ramp
-	glBindTexture(GL_TEXTURE_2D, texture_contexts[LIGHTING_GOOCH]);
-	for (int i = 0; i < texsize; i++) {
-		float z = float(i + 1 - texsize/2) / (0.5f * texsize);
-		float r = 0.75f + 0.25f * z;
-		float g = r;
-		float b = 0.9f - 0.1f * z;
-		texture[3*i  ] = max(0, int(255 * r));
-		texture[3*i+1] = max(0, int(255 * g));
-		texture[3*i+2] = max(0, int(255 * b));
-	}
-	glTexImage2D(GL_TEXTURE_2D, 0, 3, texsize, 1, 0,
-		     GL_RGB, GL_UNSIGNED_BYTE, texture);
-}
-
-
 // Draw the basic mesh, which we'll overlay with lines
 void draw_base_mesh()
 {
@@ -370,7 +302,9 @@ void draw_base_mesh()
 
 	// Enable the vertex array
 	glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
 	glVertexPointer(3, GL_FLOAT, 0, &themesh->vertices[0][0]);
+    glNormalPointer(GL_FLOAT, 0, &themesh->normals[0][0]);
 
 	// Set up for color
     if (color_style == "White") {
@@ -401,47 +335,32 @@ void draw_base_mesh()
         }
 	}
 
-	// Set up for lighting
-	vector<float> ndotl;
-	if (lighting_style != "None") {
-		// Set up texture
-		static GLuint texture_contexts[nlighting_styles];
-		static bool havetextures = false;
-		if (!havetextures) {
-			make_light_textures(texture_contexts);
-			havetextures = true;
-		}
-
-		// Compute lighting direction -- the Z axis from the widget
-		vec lightdir(&lightdir_matrix[8]);
-		if (light_wrt_camera)
-			lightdir = rot_only(inv(xf)) * lightdir;
-		float rotamount = 180.0f / M_PI * acos(lightdir DOT vec(1,0,0));
-		vec rotaxis = lightdir CROSS vec(1,0,0);
-
-		// Texture matrix: remap from normals to texture coords
-		glMatrixMode(GL_TEXTURE);
-		glLoadIdentity();
-		glTranslatef(0.5, 0.5, 0); // Remap [-0.5 .. 0.5] -> [0 .. 1]
-		glScalef(0.496, 0, 0);     // Remap [-1 .. 1] -> (-0.5 .. 0.5)
-		glMatrixMode(GL_MODELVIEW);
-
-		// Bind and enable the texturing
-		glBindTexture(GL_TEXTURE_2D, texture_contexts[lighting_style.index()]);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-		glEnable(GL_TEXTURE_2D);
-
-		// On broken hardware, compute 1D tex coords by hand
-        ndotl.resize(nv);
-        for (int i = 0; i < nv; i++)
-            ndotl[i] = themesh->normals[i] DOT lightdir;
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glTexCoordPointer(1, GL_FLOAT, 0, &ndotl[0]);
-	}
-
+    GQShaderRef shader;
+    // Shaders for debugging colors
+    if (color_style == "Depth") {
+        shader = GQShaderManager::bindProgram("depth");
+        shader.setUniform3fv("bsphere_center", themesh->bsphere.center);
+        shader.setUniform1f("bsphere_radius", themesh->bsphere.r);
+    } else if (color_style == "Normals") {
+        shader = GQShaderManager::bindProgram("normals");
+    }
+    // Actual lighting shaders
+    else if (lighting_style == "None") {
+        shader = GQShaderManager::bindProgram("nolighting");
+    } else if (lighting_style == "Lambertian") {
+        shader = GQShaderManager::bindProgram("diffuse");
+    } else if (lighting_style == "Lambertian2") {
+        shader = GQShaderManager::bindProgram("diffuse2");
+    } else if (lighting_style == "Hemisphere") {
+        shader = GQShaderManager::bindProgram("hemisphere");
+    } else if (lighting_style == "Toon") {
+        shader = GQShaderManager::bindProgram("toon");
+    } else if (lighting_style == "Toon BW") {
+        shader = GQShaderManager::bindProgram("toonbw");
+    } else if (lighting_style == "Gooch") {
+        shader = GQShaderManager::bindProgram("gooch");
+    }   
+    shader.setUniform3fv("light_dir_world", light_direction);
 
 	// Draw the mesh, possibly with color and/or lighting
 	glDepthFunc(GL_LESS);
@@ -454,8 +373,9 @@ void draw_base_mesh()
     draw_tstrips();
 
 	// Reset everything
+    shader.unbind();    
 	glDisableClientState(GL_COLOR_ARRAY);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	//glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_TEXTURE_2D);
 	glMatrixMode(GL_TEXTURE);
@@ -464,7 +384,7 @@ void draw_base_mesh()
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_FALSE); // Do not remove me, else get dotted lines
-
+    
 	// Draw the mesh edges on top, if requested
 	set_line_width(1);
 	if (draw_edges) {
@@ -564,6 +484,7 @@ void draw_base_mesh()
 	}
 
 	glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
 }
 
 
@@ -1348,17 +1269,12 @@ void draw_boundaries(bool do_hidden)
 // Draw lines of n.l = const.
 void draw_isophotes(const vector<float> &ndotv)
 {
-	// Light direction
-	vec lightdir(&lightdir_matrix[8]);
-	if (light_wrt_camera)
-		lightdir = rot_only(inv(xf)) * lightdir;
-
 	// Compute N dot L
 	int nv = themesh->vertices.size();
 	static vector<float> ndotl;
 	ndotl.resize(nv);
 	for (int i = 0; i < nv; i++)
-		ndotl[i] = themesh->normals[i] DOT lightdir;
+		ndotl[i] = themesh->normals[i] DOT light_direction;
 
 	if (draw_colors)
 		currcolor = vec(0.4, 0.8, 0.4);
@@ -1471,46 +1387,23 @@ void draw_misc(const vector<float> &ndotv, const vector<float> &DwKr,
 		glEnd();
 	}
 }
+    
 
 
-// Draw the mesh, possibly including a bunch of lines
-void draw_mesh()
+void draw_lines()
 {
-	// These are static so the memory isn't reallocated on every frame
-	static vector<float> ndotv, kr;
-	static vector<float> sctest_num, sctest_den, shtest_num;
-	static vector<float> q1, Dt1q1;
-	static vector<vec2> t1;
-	compute_perview(ndotv, kr, sctest_num, sctest_den, shtest_num,
-		q1, t1, Dt1q1, use_texture);
+    
 	int nv = themesh->vertices.size();
 
-	// Enable antialiased lines
-	glEnable(GL_POINT_SMOOTH);
-	glEnable(GL_LINE_SMOOTH);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	// Exterior silhouette
-	if (draw_extsil)
-		draw_silhouette(ndotv);
-
-	// The mesh itself, possibly colored and/or lit
-	glDisable(GL_BLEND);
-	draw_base_mesh();
-	glEnable(GL_BLEND);
-
-	// Draw the lines on top
-    
     bool draw_light_lines = color_style == "Gray" || lighting_style != "None";
-
+    
 	// First rendering pass (in light gray) if drawing hidden lines
 	if (draw_hidden) {
 		glDisable(GL_DEPTH_TEST);
-
+        
 		// K=0, H=0, DwKr=thresh
 		draw_misc(ndotv, sctest_num, true);
-
+        
 		// Apparent ridges
 		if (draw_apparent) {
 			if (draw_colors) {
@@ -1522,13 +1415,13 @@ void draw_mesh()
 					currcolor = vec(0.55, 0.55, 0.55);
 			}
 			if (draw_colors)
-			set_line_width(2);
+                set_line_width(2);
 			glBegin(GL_LINES);
 			draw_mesh_app_ridges(ndotv, q1, t1, Dt1q1, true,
-				test_ar, ar_thresh / sqr(feature_size));
+                                 test_ar, ar_thresh / sqr(feature_size));
 			glEnd();
 		}
-
+        
 		// Ridges and valleys
 		currcolor = vec(0.55, 0.55, 0.55);
 		if (draw_ridges) {
@@ -1537,7 +1430,7 @@ void draw_mesh()
 			set_line_width(1);
 			glBegin(GL_LINES);
 			draw_mesh_ridges(true, ndotv, false, test_rv,
-					 rv_thresh / feature_size);
+                             rv_thresh / feature_size);
 			glEnd();
 		}
 		if (draw_valleys) {
@@ -1546,10 +1439,10 @@ void draw_mesh()
 			set_line_width(1);
 			glBegin(GL_LINES);
 			draw_mesh_ridges(false, ndotv, false, test_rv,
-					 rv_thresh / feature_size);
+                             rv_thresh / feature_size);
 			glEnd();
 		}
-
+        
 		// Principal highlights
 		if (draw_phridges || draw_phvalleys) {
 			if (draw_colors) {
@@ -1569,7 +1462,7 @@ void draw_mesh()
 				draw_mesh_ph(false, ndotv, false, test_ph, thresh);
 			glEnd();
 		}
-
+        
 		// Suggestive highlights
 		if (draw_sh) {
 			if (draw_colors) {
@@ -1584,54 +1477,54 @@ void draw_mesh()
 			set_line_width(2.5);
 			glBegin(GL_LINES);
 			draw_isolines(kr, shtest_num, sctest_den, ndotv,
-				      false, use_hermite, test_sh, fade);
+                          false, use_hermite, test_sh, fade);
 			glEnd();
 		}
-
+        
 		// Suggestive contours and contours
 		if (draw_sc) {
 			float fade = (draw_faded && test_sc) ?
-				     0.03f / sqr(feature_size) : 0.0f;
+            0.03f / sqr(feature_size) : 0.0f;
 			if (draw_colors)
 				currcolor = vec(0.5, 0.5, 1.0);
 			set_line_width(1.5);
 			glBegin(GL_LINES);
 			draw_isolines(kr, sctest_num, sctest_den, ndotv,
-				      false, use_hermite, test_sc, fade);
+                          false, use_hermite, test_sc, fade);
 			glEnd();
 		}
-
+        
 		if (draw_c) {
 			if (draw_colors)
 				currcolor = vec(0.4, 0.8, 0.4);
 			set_line_width(1.5);
 			glBegin(GL_LINES);
 			draw_isolines(ndotv, kr, vector<float>(), ndotv,
-				      false, false, test_c, 0.0f);
+                          false, false, test_c, 0.0f);
 			glEnd();
 		}
         
 		// Boundaries
 		if (draw_bdy)
 			draw_boundaries(true);
-
+        
 		glEnable(GL_DEPTH_TEST);
 	}
-
-
+    
+    
 	// The main rendering pass
-
+    
 	// Isophotes
 	if (draw_isoph)
 		draw_isophotes(ndotv);
-
+    
 	// Topo lines
 	if (draw_topo)
 		draw_topolines(ndotv);
-
+    
 	// K=0, H=0, DwKr=thresh
 	draw_misc(ndotv, sctest_num, false);
-
+    
 	// Apparent ridges
 	currcolor = vec(0.0, 0.0, 0.0);
 	if (draw_apparent) {
@@ -1640,10 +1533,10 @@ void draw_mesh()
 		set_line_width(2.5);
 		glBegin(GL_LINES);
 		draw_mesh_app_ridges(ndotv, q1, t1, Dt1q1, true,
-			test_ar, ar_thresh / sqr(feature_size));
+                             test_ar, ar_thresh / sqr(feature_size));
 		glEnd();
 	}
-
+    
 	// Ridges and valleys
 	currcolor = vec(0.0, 0.0, 0.0);
 	float rvfade = draw_faded ? rv_thresh / feature_size : 0.0f;
@@ -1653,7 +1546,7 @@ void draw_mesh()
 		set_line_width(2);
 		glBegin(GL_LINES);
 		draw_mesh_ridges(true, ndotv, true, test_rv,
-				 rv_thresh / feature_size);
+                         rv_thresh / feature_size);
 		glEnd();
 	}
 	if (draw_valleys) {
@@ -1662,10 +1555,10 @@ void draw_mesh()
 		set_line_width(2);
 		glBegin(GL_LINES);
 		draw_mesh_ridges(false, ndotv, true, test_rv,
-				 rv_thresh / feature_size);
+                         rv_thresh / feature_size);
 		glEnd();
 	}
-
+    
 	// Principal highlights
 	if (draw_phridges || draw_phvalleys) {
 		if (draw_colors) {
@@ -1686,9 +1579,9 @@ void draw_mesh()
 		glEnd();
 		currcolor = vec(0.0, 0.0, 0.0);
 	}
-
+    
 	// Suggestive highlights
-        if (draw_sh) {
+    if (draw_sh) {
 		if (draw_colors) {
 			currcolor = vec(0.5,0,0);
 		} else {
@@ -1701,11 +1594,11 @@ void draw_mesh()
 		set_line_width(2.5);
 		glBegin(GL_LINES);
 		draw_isolines(kr, shtest_num, sctest_den, ndotv,
-			      true, use_hermite, test_sh, fade);
+                      true, use_hermite, test_sh, fade);
 		glEnd();
 		currcolor = vec(0.0, 0.0, 0.0);
-        }
-
+    }
+    
 	// Kr = 0 loops
 	if (draw_sc && !test_sc && !draw_hidden) {
 		if (draw_colors)
@@ -1715,11 +1608,11 @@ void draw_mesh()
 		set_line_width(1.5);
 		glBegin(GL_LINES);
 		draw_isolines(kr, sctest_num, sctest_den, ndotv,
-			      true, use_hermite, false, 0.0f);
+                      true, use_hermite, false, 0.0f);
 		glEnd();
 		currcolor = vec(0.0, 0.0, 0.0);
 	}
-
+    
 	// Suggestive contours and contours
 	if (draw_sc && !use_texture) {
 		float fade = draw_faded ? 0.03f / sqr(feature_size) : 0.0f;
@@ -1728,7 +1621,7 @@ void draw_mesh()
 		set_line_width(2.5);
 		glBegin(GL_LINES);
 		draw_isolines(kr, sctest_num, sctest_den, ndotv,
-			      true, use_hermite, true, fade);
+                      true, use_hermite, true, fade);
 		glEnd();
 	}
 	if (draw_c && !use_texture) {
@@ -1737,17 +1630,43 @@ void draw_mesh()
 		set_line_width(2.5);
 		glBegin(GL_LINES);
 		draw_isolines(ndotv, kr, vector<float>(), ndotv,
-			      false, false, true, 0.0f);
+                      false, false, true, 0.0f);
 		glEnd();
 	}
 	if ((draw_sc || draw_c) && use_texture)
 		draw_c_sc_texture(ndotv, kr, sctest_num, sctest_den);
-
-
+    
+    
     
 	// Boundaries
 	if (draw_bdy)
 		draw_boundaries(false);
+}
+    
+// Draw the mesh, possibly including a bunch of lines
+void draw_everything()
+{
+	compute_perview(ndotv, kr, sctest_num, sctest_den, shtest_num,
+                    q1, t1, Dt1q1, use_texture);
+    
+	// Enable antialiased lines
+	glEnable(GL_POINT_SMOOTH);
+	glEnable(GL_LINE_SMOOTH);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// Exterior silhouette
+	if (draw_extsil && enable_lines)
+		draw_silhouette(ndotv);
+
+	// The mesh itself, possibly colored and/or lit
+	glDisable(GL_BLEND);
+	draw_base_mesh();
+	glEnable(GL_BLEND);
+
+	if (enable_lines) {
+        draw_lines();
+    }
 
 	glDisable(GL_LINE_SMOOTH);
 	glDisable(GL_POINT_SMOOTH);
@@ -1761,18 +1680,25 @@ void setCameraTransform(xform main)
     xf = main;
     viewpos = inv(xf) * point(0,0,0);
 }
+    
+void setLightDir(const vec& lightdir)
+{
+    light_direction = lightdir;
+}
 
 // Draw the scene
 void redraw()
 {
-    if (color_style == "Black") {
+    if (background_style == "Black") {
         glClearColor(0.0,0.0,0.0,0.0);
+    } else if (background_style == "Gray") {
+        glClearColor(0.5,0.5,0.5,0.0);
     } else {
         glClearColor(1.0,1.0,1.0,0.0);
     }
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    draw_mesh();
+    draw_everything();
 }
 
 // Smooth the mesh

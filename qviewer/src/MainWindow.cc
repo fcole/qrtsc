@@ -163,26 +163,32 @@ bool MainWindow::openScene( const QString& filename )
         delete _scene;
 
     _scene = new_scene;
-    _scene_name = QDir::fromNativeSeparators(filename);
-
+    
     Stats::instance().clear();
     _scene->recordStats(Stats::instance());
 
     _gl_viewer->setScene(_scene);
     _dials_and_knobs->load(_scene->dialsAndKnobsState());
-
-    addCurrentSceneToRecentList();
-
-    makeWindowTitle();
     
     _gl_viewer->updateGL();
+    
+    _scene_name = QDir::fromNativeSeparators(filename);
+    addCurrentSceneToRecentList();
+    makeWindowTitle();
     
     return true;
 }
 
 bool MainWindow::saveScene( const QString& filename )
 {
-    return _scene->save(filename, _gl_viewer, _dials_and_knobs);
+    bool success = _scene->save(filename, _gl_viewer, _dials_and_knobs);
+    
+    if (success) {
+        _scene_name = QDir::fromNativeSeparators(filename);
+        addCurrentSceneToRecentList();
+        makeWindowTitle();
+    }
+    return success;
 }
 
 void MainWindow::on_actionOpen_Recent_Scene_triggered(int which)
@@ -263,9 +269,9 @@ void MainWindow::setupFileMenu()
 
     fileMenu->addSeparator();
 
-    QAction* saveSceneAction = new QAction(tr("&Save Scene..."), 0);
+    QAction* saveSceneAction = new QAction(tr("&Save Scene As..."), 0);
     connect(saveSceneAction, SIGNAL(triggered()), 
-        this, SLOT(on_actionSave_Scene_triggered()));
+        this, SLOT(on_actionSave_Scene_As_triggered()));
     fileMenu->addAction(saveSceneAction);
 
     QAction* save_screenshot = new QAction(tr("Save S&creenshot..."), 0);
@@ -353,10 +359,10 @@ void MainWindow::on_actionOpen_Scene_triggered()
     }
 }
 
-void MainWindow::on_actionSave_Scene_triggered()
+void MainWindow::on_actionSave_Scene_As_triggered()
 {
     QString filename = 
-        myFileDialog(QFileDialog::AcceptSave, "Save Scene", 
+        myFileDialog(QFileDialog::AcceptSave, "Save Scene As", 
         "Scenes (*." + Scene::fileExtension() + ")", _last_scene_dir );
 
     if (!filename.isNull())

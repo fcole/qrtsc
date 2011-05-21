@@ -124,37 +124,6 @@ class dkFloat : public dkValue
     double _step_size;
 };
 
-// dkVec3
-// A 3D vector of double-precision floating point values.
-
-/*class dkVec3 : public dkValue
-{
-    Q_OBJECT
-    //Q_PROPERTY(double _value READ value WRITE setValue)
-    
-public:
-    dkVec3(const QString& name, double x, double y, double z);
-    
-    virtual bool load(QDomElement& root);
-    virtual bool save(QDomDocument& doc, QDomElement& root) const;
-    
-    QVector<double> value() const { return _value; }
-    
-    static dkVec3* find(const QString& name);
-    
-public slots:
-    void setX(double x);
-    void setY(double y);
-    void setZ(double z);    
-    
-signals:
-    void valueChanged(double f);
-    
-protected:
-    QVector<double> _value;
-};*/
-
-
 // dkInt
 // A single integer value.
 
@@ -283,6 +252,7 @@ class dkStringList : public dkValue
 
   public slots:
     void setIndex(int index);
+    void setValue(const QString& value);
 
   signals:
     void indexChanged(int index);

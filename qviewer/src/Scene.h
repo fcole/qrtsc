@@ -46,6 +46,7 @@ public:
     void boundingSphere(vec& center, float& radius);
 
     void setCameraTransform( const xform& xf );
+    void setLightDir(const vec& lightdir);
 
     const TriMesh* trimesh() const { return _trimesh; }
     const QDomElement& viewerState() { return _viewer_state; }
