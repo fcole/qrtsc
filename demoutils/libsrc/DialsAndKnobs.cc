@@ -518,6 +518,8 @@ DialsAndKnobs::DialsAndKnobs(QMainWindow* parent, QMenu* window_menu,
         if (_parent_window_menu) {
             _parent_window_menu->addAction(this->toggleViewAction());
         }
+    } else {
+        this->hide();
     }
 }
 
