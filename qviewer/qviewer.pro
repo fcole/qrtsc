@@ -26,7 +26,7 @@ else {
         QMAKE_INFO_PLIST = macosx/Info.plist
 
         ICON.files = macosx/bunny_icon.icns
-        ICON.path = Contents
+        ICON.path = Contents/Resources
 
         SHADERS.files = shaders
         SHADERS.path = Contents/MacOS
