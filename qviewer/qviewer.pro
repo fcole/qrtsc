@@ -23,6 +23,14 @@ else {
             CONFIG -= app_bundle
         }
         LIBS += -framework CoreFoundation
+        QMAKE_INFO_PLIST = macosx/Info.plist
+
+        ICON.files = macosx/bunny_icon.icns
+        ICON.path = Contents
+
+        SHADERS.files = shaders
+        SHADERS.path = Contents/MacOS
+        QMAKE_BUNDLE_DATA += SHADERS ICON
     }
     else {
         DEFINES += LINUX
