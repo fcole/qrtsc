@@ -29,9 +29,14 @@ qrtscApp::qrtscApp(int& argc, char** argv) : QApplication(argc, argv)
 {
     QString scene_name;
     
-    QDir shaders_dir = findShadersDirectory();
+    QDir shaders_dir;
     QDir working_dir = QDir::current();
     
+    bool found = findShadersDirectory(shaders_dir);
+    if (!found) {
+        exit(1);
+    }
+
     GQShaderManager::setShaderDirectory(shaders_dir);
     
     for (int i = 1; i < arguments().size(); i++)
@@ -69,7 +74,7 @@ void qrtscApp::printUsage(const char *myname)
     exit(1);
 }
 
-QDir qrtscApp::findShadersDirectory()
+bool qrtscApp::findShadersDirectory(QDir& shaders_dir)
 {
     QString app_path = applicationDirPath();
     // look for the shaders/programs.xml file to find the working directory
@@ -77,21 +82,28 @@ QDir qrtscApp::findShadersDirectory()
     candidates << QDir::cleanPath(app_path)
     << QDir::cleanPath(QDir::currentPath() + "/../")
     << QDir::currentPath();
-    
+
+    bool dir_found = false;
+
     for (int i = 0; i < candidates.size(); i++)
     {
-        if (QFileInfo(candidates[i] + "/shaders/programs.xml").exists())
-            return QDir(candidates[i] + "/shaders");
+        if (QFileInfo(candidates[i] + "/shaders/programs.xml").exists()) {
+            shaders_dir = QDir(candidates[i] + "/shaders");
+            dir_found = true;
+            break;
+        }
     }
     
-    QString pathstring;
-    for (int i = 0; i < candidates.size(); i++)
-        pathstring = pathstring + candidates[i] + "/shaders/programs.xml\n";
+    if (!dir_found) {
+        QString pathstring;
+        for (int i = 0; i < candidates.size(); i++)
+            pathstring = pathstring + candidates[i] + "/shaders/programs.xml\n";
+        
+        QMessageBox::critical(NULL, "Error", 
+            QString("Could not find programs.xml (or the working directory). Tried: \n %1").arg(pathstring));
+    }
     
-    QMessageBox::critical(NULL, "Error", 
-                          QString("Could not find programs.xml (or the working directory). Tried: \n %1").arg(pathstring));
-    
-    exit(1);
+    return dir_found;
 }
 
 // The main routine makes the window, and then runs an event loop

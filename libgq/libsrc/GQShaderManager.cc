@@ -337,7 +337,7 @@ void GQShaderManager::initialize()
             glShaderSource( shader_handle, num_source_files, (const GLchar**)(p_source_files), NULL);
 
             glCompileShader( shader_handle );
-            shaderInfoLog( QString(program_name + ", " + shader_type), shader_handle );
+            shaderInfoLog(QString(program_name + ", " + shader_type), shader_handle);
 
             _shaders.push_back(shader_handle);
 
@@ -579,8 +579,12 @@ void GQShaderManager::shaderInfoLog( const QString& filename, GLuint obj)
     GLint charsWritten  = 0;
     char *infoLog;
 
-    glGetShaderiv(obj, GL_INFO_LOG_LENGTH,&infologLength);
+    GLint status;
+    glGetShaderiv(obj, GL_COMPILE_STATUS, &status);
+    if (status == GL_TRUE)
+        return;
 
+    glGetShaderiv(obj, GL_INFO_LOG_LENGTH, &infologLength);
     if (infologLength > 1)
     {
         infoLog = (char *)malloc(infologLength);

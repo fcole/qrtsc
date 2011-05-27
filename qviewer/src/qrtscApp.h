@@ -26,7 +26,7 @@ class qrtscApp : public QApplication
     
     void printUsage(const char *myname);
     
-    QDir findShadersDirectory();
+    bool findShadersDirectory(QDir& shaders_dir);
 
   protected:
     MainWindow _main_window;
