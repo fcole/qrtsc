@@ -36,7 +36,9 @@ class MainWindow : public QMainWindow
 
   public slots:
     void on_actionOpen_Scene_triggered();
+    void on_actionOpen_Camera_triggered();
     void on_actionSave_Scene_As_triggered();
+    void on_actionSave_Camera_triggered();
     void on_actionReload_Shaders_triggered();
     void on_actionOpen_Recent_Scene_triggered(int which);
     void on_actionSave_Screenshot_triggered();
@@ -47,6 +49,9 @@ class MainWindow : public QMainWindow
     bool openScene(const QString& filename);
     bool saveScene(const QString& filename);
     bool saveScreenshot(const QString& filename);
+
+    bool saveCamera(const QString& filename);
+    bool openCamera(const QString& filename);
 
   protected:
     void closeEvent(QCloseEvent* event );

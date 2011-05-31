@@ -282,6 +282,18 @@ void MainWindow::setupFileMenu()
 
     fileMenu->addSeparator();
 
+    QAction* openCameraAction = new QAction(tr("O&pen Camera"), 0);
+    connect(openCameraAction, SIGNAL(triggered()), 
+        this, SLOT(on_actionOpen_Camera_triggered()));
+    fileMenu->addAction(openCameraAction);
+
+    QAction* saveCameraAction = new QAction(tr("Save C&amera As..."), 0);
+    connect(saveCameraAction, SIGNAL(triggered()), 
+        this, SLOT(on_actionSave_Camera_triggered()));
+    fileMenu->addAction(saveCameraAction);
+
+    fileMenu->addSeparator();
+
     QAction* reloadShadersAction = new QAction(tr("&Reload Shaders"), 0);
     reloadShadersAction->setShortcut(QKeySequence(tr("Ctrl+L")));
     connect(reloadShadersAction, SIGNAL(triggered()), 
@@ -359,6 +371,19 @@ void MainWindow::on_actionOpen_Scene_triggered()
     }
 }
 
+void MainWindow::on_actionOpen_Camera_triggered()
+{
+    QString filename = 
+        myFileDialog(QFileDialog::AcceptOpen, "Open Camera", 
+        "Cameras ( *.xf)", 
+        _last_camera_dir );
+
+    if (!filename.isNull())
+    {
+        openCamera( filename );
+    }
+}
+
 void MainWindow::on_actionSave_Scene_As_triggered()
 {
     QString filename = 
@@ -371,6 +396,17 @@ void MainWindow::on_actionSave_Scene_As_triggered()
     }
 }
 
+void MainWindow::on_actionSave_Camera_triggered()
+{
+    QString filename = 
+        myFileDialog(QFileDialog::AcceptSave, "Save Camera", 
+        "Cameras (*.xf)", _last_camera_dir );
+
+    if (!filename.isNull())
+    {
+        saveCamera( filename );
+    }
+}
 
 void MainWindow::on_actionSave_Screenshot_triggered()
 {
@@ -396,6 +432,67 @@ bool MainWindow::saveScreenshot(const QString& filename)
     _gl_viewer->saveScreenshot(filename);
     return true;
 }
+
+bool MainWindow::saveCamera(const QString& filename)
+{
+    GLdouble mv[16];
+    _gl_viewer->camera()->getModelViewMatrix(mv);
+    xform xf( mv );
+
+    xf.write( qPrintable(filename) );
+
+    // append the fovy value to the xf format... doesn't stop
+    // rtsc from reading the file
+    QFile file( filename );
+    if (!file.open(QIODevice::ReadWrite | QIODevice::Text))
+        return false;
+
+    QTextStream out(&file);
+    out.seek(file.size());
+
+    out << _gl_viewer->camera()->fieldOfView() << "\n";
+    QSize viewersize = _gl_viewer->size();
+    out << viewersize.width() << " " << viewersize.height() << "\n";
+    file.close();
+
+    _console->print(QString("Wrote %1\n").arg(filename));
+    return true;
+}
+
+bool MainWindow::openCamera(const QString& filename)
+{
+    bool success = false;
+
+    if (filename.endsWith(".xf")) {
+        xform xf;
+        xf.read(qPrintable(filename));
+        _gl_viewer->camera()->setFromModelViewMatrix(xf);
+
+        QFile file( filename );
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+            return false;
+
+        QTextStream in(&file);
+        for (int i = 0; i < 4; i++) {
+            in.readLine();
+        }
+
+        float fov;
+        int sizex, sizey;
+        in >> fov;
+        in >> sizex >> sizey;
+        file.close();
+
+        _gl_viewer->camera()->setFieldOfView(fov);
+        fitViewerSize(sizex, sizey);
+
+        _gl_viewer->updateGL();
+
+        success = true;
+    }
+    return success;
+}
+
 
 void MainWindow::setFoV(float degrees)
 {
