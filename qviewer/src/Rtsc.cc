@@ -74,6 +74,7 @@ static dkFloat sh_thresh("Tests->SH Thresh", 0.02, 0.0, 1, 0.01);
 static dkFloat ph_thresh("Tests->PH Thresh", 0.04, 0.0, 1, 0.01);
 static dkFloat rv_thresh("Tests->RV Thresh", 0.1, 0.0, 1, 0.01);
 static dkFloat ar_thresh("Tests->AR Thresh", 0.1, 0.0, 1, 0.01);
+static dkFloat poly_offset_factor("Tests->Polygon Offset", 5.0);
 
 // Toggles for style
 static dkBool use_texture("Style->Use Texture", false);
@@ -376,7 +377,7 @@ void draw_base_mesh()
 	// Draw the mesh, possibly with color and/or lighting
 	glDepthFunc(GL_LESS);
 	glEnable(GL_DEPTH_TEST);
-	glPolygonOffset(5.0f, 30.0f);
+	glPolygonOffset(poly_offset_factor, 30.0);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glEnable(GL_CULL_FACE);
 
