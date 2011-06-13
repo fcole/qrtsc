@@ -53,6 +53,16 @@ See the COPYING file for details.
             <source filename="hemisphere.frag"/>
         </shader>
     </program>
+    <program name="shiny">
+        <shader type="vertex">
+            <source filename="version.glsl"/>
+            <source filename="polygon_render.vert"/>
+        </shader>
+        <shader type="fragment">
+            <source filename="version.glsl"/>
+            <source filename="shiny.frag"/>
+        </shader>
+    </program>
     <program name="toon">
         <shader type="vertex">
             <source filename="version.glsl"/>

@@ -93,7 +93,8 @@ static dkStringList color_style("Style->Mesh Color", mesh_color_types);
 
 // Lighting
 static QStringList lighting_types = QStringList() << "None" << "Lambertian" 
-    << "Lambertian2" << "Hemisphere" << "Toon" << "Toon BW" << "Gooch";    
+    << "Lambertian2" << "Hemisphere" << "Shiny" 
+    << "Toon" << "Toon BW" << "Gooch";    
 static dkStringList lighting_style("Style->Lighting", lighting_types);
 vec light_direction;
     
@@ -364,6 +365,8 @@ void draw_base_mesh()
             shader = GQShaderManager::bindProgram("diffuse2");
         } else if (lighting_style == "Hemisphere") {
             shader = GQShaderManager::bindProgram("hemisphere");
+        } else if (lighting_style == "Shiny") {
+            shader = GQShaderManager::bindProgram("shiny");
         } else if (lighting_style == "Toon") {
             shader = GQShaderManager::bindProgram("toon");
         } else if (lighting_style == "Toon BW") {
