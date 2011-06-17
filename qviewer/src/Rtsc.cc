@@ -33,6 +33,7 @@ Port modifications by:
 #include "DialsAndKnobs.h"
 #include "GQInclude.h"
 #include "GQShaderManager.h"
+#include "GQTexture.h"
 
 using namespace std;
 
@@ -88,7 +89,7 @@ static dkBool draw_edges("Style->Draw Edges", false);
 vector<Color> curv_colors, gcurv_colors;
 static QStringList mesh_color_types = QStringList() << "White" << "Gray" 
     << "Black" << "Curvature" << "Gaussian C." << "Mesh" << "Depth"
-    << "Normals";
+    << "Normals" << "Texture";
 static dkStringList color_style("Style->Mesh Color", mesh_color_types);
 
 // Lighting
@@ -102,7 +103,10 @@ vec light_direction;
 static QStringList background_types = QStringList() << "White" << "Black" 
     << "Gray";
 static dkStringList background_style("Style->Background", background_types);
-    
+
+static dkFilename texture_filename("Style->Solid Texture");
+static dkFloat texture_scale("Style->Texture Scale", 1.0, 0.0, 1000.0, 0.1);
+GQTexture3D texture;
     
 // Per-vertex vectors
 static dkBool draw_norm("Vectors->Normals", false);
@@ -303,6 +307,16 @@ void compute_gcurv_colors()
 		gcurv_colors[i] = Color(C,C,C);
 	}
 }
+    
+bool load_texture( const QString& filename)
+{
+    bool ret = texture.load(filename);
+    if (ret) {
+        texture.generateMipmaps();
+        texture.setAnisotropicFiltering(true);
+    }
+    return ret; 
+}
 
 // Draw the basic mesh, which we'll overlay with lines
 void draw_base_mesh()
@@ -344,7 +358,12 @@ void draw_base_mesh()
         } else {
             glColor3f(1,1,1);
         }
-	}
+	} else if (color_style == "Texture") {
+        glColor3f(1,1,1);
+        if (texture_filename.changedLastFrame()) {
+            load_texture(texture_filename);
+        }
+    } 
 
     GQShaderRef shader;
     // Shaders for debugging colors
@@ -356,25 +375,38 @@ void draw_base_mesh()
         shader = GQShaderManager::bindProgram("normals");
     }
     // Actual lighting shaders
-    else if (lighting_style == "None") {
-        shader = GQShaderManager::bindProgram("nolighting");
-    } else {
-        if (lighting_style == "Lambertian") {
-            shader = GQShaderManager::bindProgram("diffuse");
-        } else if (lighting_style == "Lambertian2") {
-            shader = GQShaderManager::bindProgram("diffuse2");
-        } else if (lighting_style == "Hemisphere") {
-            shader = GQShaderManager::bindProgram("hemisphere");
-        } else if (lighting_style == "Shiny") {
-            shader = GQShaderManager::bindProgram("shiny");
-        } else if (lighting_style == "Toon") {
-            shader = GQShaderManager::bindProgram("toon");
-        } else if (lighting_style == "Toon BW") {
-            shader = GQShaderManager::bindProgram("toonbw");
-        } else if (lighting_style == "Gooch") {
-            shader = GQShaderManager::bindProgram("gooch");
+    else {
+        if (lighting_style == "None") {
+            shader = GQShaderManager::bindProgram("nolighting");
+        } else {
+            if (lighting_style == "Lambertian") {
+                shader = GQShaderManager::bindProgram("diffuse");
+            } else if (lighting_style == "Lambertian2") {
+                shader = GQShaderManager::bindProgram("diffuse2");
+            } else if (lighting_style == "Hemisphere") {
+                shader = GQShaderManager::bindProgram("hemisphere");
+            } else if (lighting_style == "Shiny") {
+                shader = GQShaderManager::bindProgram("shiny");
+            } else if (lighting_style == "Toon") {
+                shader = GQShaderManager::bindProgram("toon");
+            } else if (lighting_style == "Toon BW") {
+                shader = GQShaderManager::bindProgram("toonbw");
+            } else if (lighting_style == "Gooch") {
+                shader = GQShaderManager::bindProgram("gooch");
+            }
+            shader.setUniform3fv("light_dir_world", light_direction);
         }
-        shader.setUniform3fv("light_dir_world", light_direction);
+        
+        if (color_style == "Texture") {
+            shader.bindNamedTexture("texture", &texture);
+            shader.setUniform1f("texture_scale", texture_scale);
+            shader.setUniform1f("scale_x", 1.0);
+            shader.setUniform1f("scale_y", 1.0);
+            shader.setUniform1f("contrast", 1.0);
+            shader.setUniform1f("use_texture", 1.0);
+        } else {
+            shader.setUniform1f("use_texture", 0.0);
+        }
     }   
 
 	// Draw the mesh, possibly with color and/or lighting

@@ -14,9 +14,6 @@ See the COPYING file for details.
 // interpolated values
 varying vec3 vert_light_world;
 varying vec3 vert_normal_world;
-varying vec3 vert_pos_camera;
-varying vec3 vert_pos_world;
-varying vec4 vert_pos_clip;
 varying vec3 camera_pos_world;
 
 void main()
@@ -29,10 +26,14 @@ void main()
 	float shiny = pow(specular, shininess);
     vec4 specular_color = vec4(1,1,1,1);
 
-    float kd = 0.6;
+    float ka = 0.1;
+    float kd = 0.5;
     float ks = 0.4;
+
+    vec4 surf_color = surfaceColor();
 	
-	vec4 out_col = kd * diffuse * gl_Color + ks * shiny * specular_color;
+	vec4 out_col = ka * surf_color + kd * diffuse * surf_color 
+                   + ks * shiny * specular_color;
     out_col.a = 1.0;
 				      
     gl_FragColor = out_col;
