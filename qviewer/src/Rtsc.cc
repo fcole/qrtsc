@@ -104,9 +104,10 @@ static QStringList background_types = QStringList() << "White" << "Black"
     << "Gray";
 static dkStringList background_style("Style->Background", background_types);
 
-static dkFilename texture_filename("Style->Solid Texture");
+static dkFilename ui_texture_filename("Style->Solid Texture");
 static dkFloat texture_scale("Style->Texture Scale", 1.0, 0.0, 1000.0, 0.1);
 GQTexture3D texture;
+QString loaded_texture_filename;
     
 // Per-vertex vectors
 static dkBool draw_norm("Vectors->Normals", false);
@@ -314,6 +315,7 @@ bool load_texture( const QString& filename)
     if (ret) {
         texture.generateMipmaps();
         texture.setAnisotropicFiltering(true);
+        loaded_texture_filename = filename;
     }
     return ret; 
 }
@@ -331,6 +333,10 @@ void draw_base_mesh()
 	glVertexPointer(3, GL_FLOAT, 0, &themesh->vertices[0][0]);
     glNormalPointer(GL_FLOAT, 0, &themesh->normals[0][0]);
 
+    if (ui_texture_filename != loaded_texture_filename) {
+        load_texture(ui_texture_filename);
+    }
+    
 	// Set up for color
     if (color_style == "White") {
         glColor3f(1,1,1);
@@ -360,9 +366,6 @@ void draw_base_mesh()
         }
 	} else if (color_style == "Texture") {
         glColor3f(1,1,1);
-        if (texture_filename.changedLastFrame()) {
-            load_texture(texture_filename);
-        }
     } 
 
     GQShaderRef shader;
