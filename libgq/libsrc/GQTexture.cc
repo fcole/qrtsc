@@ -44,6 +44,8 @@ void GQTexture::clear()
         
 bool GQTexture2D::load( const QString& filename )
 {
+    clear();
+    
     if (filename.endsWith(".pfm") || filename.endsWith(".pbm"))
     {
         GQFloatImage image;
@@ -191,6 +193,8 @@ void GQTexture2D::generateMipmaps()
 
 bool GQTexture3D::load( const QString& filename )
 {
+    clear();
+    
     if (filename.endsWith(".mat"))
     {
         return loadMat(filename);
