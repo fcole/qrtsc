@@ -1,8 +1,8 @@
 /****************************************************************************
 
- Copyright (C) 2002-2008 Gilles Debunne. All rights reserved.
+ Copyright (C) 2002-2011 Gilles Debunne. All rights reserved.
 
- This file is part of the QGLViewer library version 2.3.5.
+ This file is part of the QGLViewer library version 2.3.16.
 
  http://www.libqglviewer.com - contact@libqglviewer.com
 
@@ -96,9 +96,9 @@ public:
 			// MOC_SKIP_END
 # endif
 			defaultConstructor(); }
-#endif
 
-#if QT_VERSION >= 0x040000
+#else
+
 	explicit QGLViewer(QWidget* parent=0, const QGLWidget* shareWidget=0, Qt::WFlags flags=0);
 	explicit QGLViewer(QGLContext *context, QWidget* parent=0, const QGLWidget* shareWidget=0, Qt::WFlags flags=0);
 	explicit QGLViewer(const QGLFormat& format, QWidget* parent=0, const QGLWidget* shareWidget=0, Qt::WFlags flags=0);
@@ -249,8 +249,8 @@ public:
 
 		This is equivalent to:
 		\code
-		setSceneCenter((m+M)/2.0);
-		setSceneRadius(0.5*(M-m).norm());
+		setSceneCenter((min+max) / 2.0);
+		setSceneRadius((max-min).norm() / 2.0);
 		\endcode */
 		void setSceneBoundingBox(const qglviewer::Vec& min, const qglviewer::Vec& max) { camera()->setSceneBoundingBox(min,max); }
 
@@ -362,7 +362,6 @@ public:
 	See Camera::loadProjectionMatrixStereo() and Camera::loadModelViewMatrixStereo().
 
 	The stereo parameters are defined by the camera(). See qglviewer::Camera::setIODistance(),
-	qglviewer::Camera::setPhysicalDistanceToScreen(),
 	qglviewer::Camera::setPhysicalScreenWidth() and
 	qglviewer::Camera::setFocusDistance(). */
 	bool displaysInStereo() const { return stereo_; }
@@ -649,8 +648,8 @@ public:
 		incremented in this method (frame-rate independent animation) or computed from actual time (for
 		instance using QTime::elapsed()) for real-time animations.
 
-		Note that KeyFrameInterpolator (which regularly updates a Frame) do not use this method but rather
-		rely on a QTimer signal-slot mechanism.
+                Note that KeyFrameInterpolator (which regularly updates a Frame) does not use this method
+                to animate a Frame, but rather rely on a QTimer signal-slot mechanism.
 
 		See the <a href="../examples/animation.html">animation example</a> for an illustration. */
 		virtual void animate() { Q_EMIT animateNeeded(); };
@@ -1076,18 +1075,17 @@ private:
 	/*! @name QGLViewer pool */
 	//@{
 public:
-	/*! Returns a \c QList (see Qt documentation) that contains pointers to all the created
-	QGLViewers. Note that this list may contain \c NULL pointers if the associated viewer has been deleted.
+	/*! Returns a \c QList that contains pointers to all the created QGLViewers.
+        Note that this list may contain \c NULL pointers if the associated viewer has been deleted.
 
-	Can be useful to apply a method or to connect a signal to all the viewers.
+	Can be useful to apply a method or to connect a signal to all the viewers:
+        \code
+	foreach (QGLViewer* viewer, QGLViewer::QGLViewerPool())
+ 	  connect(myObject, SIGNAL(IHaveChangedSignal()), viewer, SLOT(updateGL()));
+	\endcode
 
 	\attention With Qt version 3, this method returns a \c QPtrList instead. Use a \c QPtrListIterator
-	to iterate on the list:
-	\code
-	QPtrListIterator<QGLViewer> it(QGLViewer::QGLViewerPool());
-	for (QGLViewer* viewer; (viewer = it.current()) != NULL; ++it)
-	connect(myObject, SIGNAL(mySignal), viewer, SLOT(updateGL()));
-	\endcode */
+	to iterate on the list instead.*/
 #if QT_VERSION >= 0x040000
 	static const QList<QGLViewer*>& QGLViewerPool() { return QGLViewer::QGLViewerPool_; };
 #else
@@ -1099,12 +1097,13 @@ public:
 	can be used to identify the different created QGLViewers (see stateFileName() for an application
 	example).
 
-	When a QGLViewer is deleted, the following QGLViewers' indexes are shifted down. Returns -1 if the
-	QGLViewer could not be found (which should not be possible). */
+	When a QGLViewer is deleted, the QGLViewers' indexes are preserved and NULL is set for that index.
+        When a QGLViewer is created, it is placed in the first available position in that list.
+        Returns -1 if the QGLViewer could not be found (which should not be possible). */
 #if QT_VERSION >= 0x040000
 	static int QGLViewerIndex(const QGLViewer* const viewer) { return QGLViewer::QGLViewerPool_.indexOf(const_cast<QGLViewer*>(viewer)); };
 #else
-	static int QGLViewerIndex(const QGLViewer* const viewer) { return QGLViewer::QGLViewerPool_.find(viewer); };
+	static int QGLViewerIndex(const QGLViewer* const viewer) { return QGLViewer::QGLViewerPool_.findRef(viewer); };
 #endif
 	//@}
 

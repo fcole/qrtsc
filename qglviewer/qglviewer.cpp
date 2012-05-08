@@ -1,8 +1,8 @@
 /****************************************************************************
 
- Copyright (C) 2002-2008 Gilles Debunne. All rights reserved.
+ Copyright (C) 2002-2011 Gilles Debunne. All rights reserved.
 
- This file is part of the QGLViewer library version 2.3.5.
+ This file is part of the QGLViewer library version 2.3.16.
 
  http://www.libqglviewer.com - contact@libqglviewer.com
 
@@ -106,16 +106,21 @@ void QGLViewer::defaultConstructor()
 	// if (glGetString(GL_VERSION) == 0)
 	// qWarning("Unable to get OpenGL version, context may not be available - Check your configuration");
 
-	QGLViewer::QGLViewerPool_.append(this);
+#if QT_VERSION >= 0x040000
+	int poolIndex = QGLViewer::QGLViewerPool_.indexOf(NULL);
+	setFocusPolicy(Qt::StrongFocus);
+#else
+	int poolIndex = QGLViewer::QGLViewerPool_.findRef(NULL);
+	setFocusPolicy(QWidget::StrongFocus);
+#endif
+
+        if (poolIndex >= 0)
+          QGLViewer::QGLViewerPool_.replace(poolIndex, this);
+        else
+	  QGLViewer::QGLViewerPool_.append(this);
 
 	camera_ = new Camera();
 	setCamera(camera());
-
-#if QT_VERSION >= 0x040000
-	setFocusPolicy(Qt::StrongFocus);
-#else
-	setFocusPolicy(QWidget::StrongFocus);
-#endif
 
 	setDefaultShortcuts();
 	setDefaultMouseBindings();
@@ -126,10 +131,10 @@ void QGLViewer::defaultConstructor()
 	setSnapshotQuality(95);
 
 	fpsTime_.start();
-	fpsCounter_		= 0;
-	f_p_s_			= 0.0;
-	fpsString_		= tr("%1Hz", "Frames per seconds, in Hertz").arg("?");
-	visualHint_		= 0;
+	fpsCounter_     = 0;
+	f_p_s_          = 0.0;
+	fpsString_      = tr("%1Hz", "Frames per seconds, in Hertz").arg("?");
+	visualHint_     = 0;
 	previousPathId_	= 0;
 	// prevPos_ is not initialized since pos() is not meaningful here. It will be set by setFullScreen().
 
@@ -184,7 +189,7 @@ void QGLViewer::defaultConstructor()
 	tileRegion_ = NULL;
 }
 
-#if QT_VERSION >= 0x040000
+#if QT_VERSION >= 0x040000 && !defined QT3_SUPPORT
 /*! Constructor. See \c QGLWidget documentation for details.
 
 All viewer parameters (display flags, scene parameters, associated objects...) are set to their default values. See
@@ -1862,7 +1867,11 @@ static QString keyboardModifiersString(QtKeyboardModifiers m, bool noButton=fals
 #endif
 
 	if (keySequence.length() > 0)
+#if QT_VERSION >= 0x040000
 		return QKeySequence(keySequence+"X").toString(QKeySequence::NativeText).replace("X", "");
+#else
+		return QString(QKeySequence(keySequence+"X")).replace("X", "");
+#endif
 	else
 		return QString();
 }
@@ -2285,7 +2294,11 @@ QString QGLViewer::keyboardString() const
 /*! Displays the help window "About" tab. See help() for details. */
 void QGLViewer::aboutQGLViewer() {
 	help();
-	helpWidget()->setCurrentIndex(3);
+#if QT_VERSION >= 0x040000
+ 	helpWidget()->setCurrentIndex(3);
+#else
+	helpWidget()->setCurrentPage(3);
+#endif
 }
 
 	
@@ -2359,7 +2372,7 @@ void QGLViewer::help()
 						   "<h3>Version %1</h3><br>"																	  
 						   "A versatile 3D viewer based on OpenGL and Qt<br>"
 						   "Copyright 2002-%2 Gilles Debunne<br>"
-						   "<code>%3</code>").arg(QGLViewerVersionString()).arg("2010").arg("http://www.libqglviewer.com") +
+						   "<code>%3</code>").arg(QGLViewerVersionString()).arg("2012").arg("http://www.libqglviewer.com") +
 						   QString("</center>");
 				break;
 		default : break;
@@ -2587,8 +2600,8 @@ void QGLViewer::setShortcut(KeyboardAction action, int key)
 
 /*! Returns the keyboard shortcut associated to a given QGLViewer::KeyboardAction.
 
-Result is an \c int defined using Qt enumerated values, as in \c Qt::Key_Q or \c
-Qt::CTRL+Qt::Key_X. Use Qt::MODIFIER_MASK to separate the key from the state keys. Returns \c 0 if
+Result is an \c int defined using Qt enumerated values, as in \c Qt::Key_Q or
+\c Qt::CTRL + Qt::Key_X. Use Qt::MODIFIER_MASK to separate the key from the state keys. Returns \c 0 if
 the KeyboardAction is disabled (not binded). Set using setShortcut().
 
 If you want to define keyboard shortcuts for custom actions (say, open a scene file), overload

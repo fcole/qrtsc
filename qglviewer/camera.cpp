@@ -1,8 +1,8 @@
 /****************************************************************************
 
- Copyright (C) 2002-2008 Gilles Debunne. All rights reserved.
+ Copyright (C) 2002-2011 Gilles Debunne. All rights reserved.
 
- This file is part of the QGLViewer library version 2.3.5.
+ This file is part of the QGLViewer library version 2.3.16.
 
  http://www.libqglviewer.com - contact@libqglviewer.com
 
@@ -65,8 +65,7 @@ Camera::Camera()
 
   // Stereo parameters
   setIODistance(0.062f);
-  setPhysicalDistanceToScreen(0.5f);
-  setPhysicalScreenWidth(0.4f);
+  setPhysicalScreenWidth(0.5f);
   // focusDistance is set from setFieldOfView()
 
   // #CONNECTION# Camera copy constructor
@@ -135,7 +134,6 @@ Camera& Camera::operator=(const Camera& camera)
   setIODistance(camera.IODistance());
   setFocusDistance(camera.focusDistance());
   setPhysicalScreenWidth(camera.physicalScreenWidth());
-  setPhysicalDistanceToScreen(camera.physicalDistanceToScreen());
 
   orthoCoef_ = camera.orthoCoef_;
 
@@ -1590,7 +1588,7 @@ void Camera::playPath(int i)
 /*! Resets the path of the keyFrameInterpolator() number \p i.
 
 If this path is \e not being played (see playPath() and
-KeyFrameInterpolator::interpolationIsStarted()), resets it to is its starting position (see
+KeyFrameInterpolator::interpolationIsStarted()), resets it to its starting position (see
 KeyFrameInterpolator::resetInterpolation()). If the path is played, simply stops interpolation. */
 void Camera::resetPath(int i)
 {
@@ -1686,7 +1684,6 @@ QDomElement Camera::domElement(const QString& name, QDomDocument& document) cons
 
   QDomElement stereoNode = document.createElement("Stereo");
   stereoNode.setAttribute("IODist", QString::number(IODistance()));
-  stereoNode.setAttribute("distToScreen", QString::number(physicalDistanceToScreen()));
   stereoNode.setAttribute("focusDistance", QString::number(focusDistance()));
   stereoNode.setAttribute("physScreenWidth", QString::number(physicalScreenWidth()));
   de.appendChild(stereoNode);
@@ -1777,9 +1774,8 @@ void Camera::initFromDOMElement(const QDomElement& element)
       if (child.tagName() == "Stereo")
 	{
 	  setIODistance(DomUtils::floatFromDom(child, "IODist", 0.062f));
-	  setPhysicalDistanceToScreen(DomUtils::floatFromDom(child, "distToScreen", 0.5f));
 	  setFocusDistance(DomUtils::floatFromDom(child, "focusDistance", focusDistance()));
-	  setPhysicalScreenWidth(DomUtils::floatFromDom(child, "physScreenWidth", 0.4f));
+	  setPhysicalScreenWidth(DomUtils::floatFromDom(child, "physScreenWidth", 0.5f));
 	}
 
       if (child.tagName() == "KeyFrameInterpolator")
